@@ -1,0 +1,183 @@
+import { db } from '../db/client.js';
+import { teams, players, games, boxScores } from '../db/schema.js';
+import { eq, sql, inArray } from 'drizzle-orm';
+/**
+ * Upsert a team by api_id
+ * ON CONFLICT (api_id) DO UPDATE
+ * Returns the local database id
+ */
+export async function upsertTeam(row) {
+    const result = await db
+        .insert(teams)
+        .values(row)
+        .onConflictDoUpdate({
+        target: teams.apiId,
+        set: {
+            name: sql `EXCLUDED.name`,
+            abbreviation: sql `EXCLUDED.abbreviation`,
+            city: sql `EXCLUDED.city`,
+            conference: sql `EXCLUDED.conference`,
+            division: sql `EXCLUDED.division`,
+        },
+    })
+        .returning({ id: teams.id });
+    return result[0].id;
+}
+/**
+ * Upsert a player by api_id
+ * ON CONFLICT (api_id) DO UPDATE
+ * Returns the local database id
+ */
+export async function upsertPlayer(row) {
+    const result = await db
+        .insert(players)
+        .values(row)
+        .onConflictDoUpdate({
+        target: players.apiId,
+        set: {
+            fullName: sql `EXCLUDED.full_name`,
+            firstName: sql `EXCLUDED.first_name`,
+            lastName: sql `EXCLUDED.last_name`,
+            teamId: sql `EXCLUDED.team_id`,
+            position: sql `EXCLUDED.position`,
+            height: sql `EXCLUDED.height`,
+            weight: sql `EXCLUDED.weight`,
+            birthdate: sql `EXCLUDED.birthdate`,
+        },
+    })
+        .returning({ id: players.id });
+    return result[0].id;
+}
+/**
+ * Upsert a game by api_id
+ * ON CONFLICT (api_id) DO UPDATE
+ * Returns the local database id
+ */
+export async function upsertGame(row) {
+    const result = await db
+        .insert(games)
+        .values(row)
+        .onConflictDoUpdate({
+        target: games.apiId,
+        set: {
+            season: sql `EXCLUDED.season`,
+            date: sql `EXCLUDED.date`,
+            homeTeamId: sql `EXCLUDED.home_team_id`,
+            awayTeamId: sql `EXCLUDED.away_team_id`,
+            homeScore: sql `EXCLUDED.home_score`,
+            awayScore: sql `EXCLUDED.away_score`,
+        },
+    })
+        .returning({ id: games.id });
+    return result[0].id;
+}
+/**
+ * Upsert a box score by (game_id, player_id)
+ * ON CONFLICT (game_id, player_id) DO UPDATE
+ * Returns the local database id
+ */
+export async function upsertBoxScore(row) {
+    const result = await db
+        .insert(boxScores)
+        .values(row)
+        .onConflictDoUpdate({
+        target: [boxScores.gameId, boxScores.playerId],
+        set: {
+            teamId: sql `EXCLUDED.team_id`,
+            minutes: sql `EXCLUDED.minutes`,
+            points: sql `EXCLUDED.points`,
+            assists: sql `EXCLUDED.assists`,
+            rebounds: sql `EXCLUDED.rebounds`,
+            steals: sql `EXCLUDED.steals`,
+            blocks: sql `EXCLUDED.blocks`,
+            turnovers: sql `EXCLUDED.turnovers`,
+            fgm: sql `EXCLUDED.fgm`,
+            fga: sql `EXCLUDED.fga`,
+            tpm: sql `EXCLUDED.tpm`,
+            tpa: sql `EXCLUDED.tpa`,
+            ftm: sql `EXCLUDED.ftm`,
+            fta: sql `EXCLUDED.fta`,
+        },
+    })
+        .returning({ id: boxScores.id });
+    return result[0].id;
+}
+// ============================================================================
+// Helper Functions for FK Resolution
+// ============================================================================
+/**
+ * Get team database id by api_id
+ */
+export async function getTeamIdByApiId(apiId) {
+    const result = await db
+        .select({ id: teams.id })
+        .from(teams)
+        .where(eq(teams.apiId, apiId))
+        .limit(1);
+    return result[0]?.id ?? null;
+}
+/**
+ * Get player database id by api_id
+ */
+export async function getPlayerIdByApiId(apiId) {
+    const result = await db
+        .select({ id: players.id })
+        .from(players)
+        .where(eq(players.apiId, apiId))
+        .limit(1);
+    return result[0]?.id ?? null;
+}
+/**
+ * Get game database id by api_id
+ */
+export async function getGameIdByApiId(apiId) {
+    const result = await db
+        .select({ id: games.id })
+        .from(games)
+        .where(eq(games.apiId, apiId))
+        .limit(1);
+    return result[0]?.id ?? null;
+}
+/**
+ * Build a map of api_id -> database id for teams
+ */
+export async function buildTeamIdMap(apiIds) {
+    if (apiIds.length === 0)
+        return new Map();
+    const results = await db
+        .select({ apiId: teams.apiId, id: teams.id })
+        .from(teams)
+        .where(inArray(teams.apiId, apiIds));
+    const map = new Map();
+    results.forEach(row => map.set(row.apiId, row.id));
+    return map;
+}
+/**
+ * Build a map of api_id -> database id for players
+ */
+export async function buildPlayerIdMap(apiIds) {
+    if (apiIds.length === 0)
+        return new Map();
+    const results = await db
+        .select({ apiId: players.apiId, id: players.id })
+        .from(players)
+        .where(inArray(players.apiId, apiIds));
+    const map = new Map();
+    results.forEach(row => map.set(row.apiId, row.id));
+    return map;
+}
+/**
+ * Build a map of api_id -> database id for games
+ */
+export async function buildGameIdMap(apiIds) {
+    if (apiIds.length === 0)
+        return new Map();
+    const results = await db
+        .select({ apiId: games.apiId, id: games.id })
+        .from(games)
+        .where(inArray(games.apiId, apiIds));
+    const map = new Map();
+    results.forEach(row => map.set(row.apiId, row.id));
+    return map;
+}
+//# sourceMappingURL=upserts.js.map
