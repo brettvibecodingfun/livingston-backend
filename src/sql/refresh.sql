@@ -1,0 +1,2 @@
+REFRESH MATERIALIZED VIEW CONCURRENTLY season_player_stats;
+
