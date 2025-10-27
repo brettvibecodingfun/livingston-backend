@@ -83,6 +83,25 @@ export const boxScores = pgTable('box_scores', {
     playerIdIdx: index('box_scores_player_id_idx').on(table.playerId),
     teamIdIdx: index('box_scores_team_id_idx').on(table.teamId),
 }));
+/**
+ * Leaders table
+ * Stores NBA season leaders for various statistical categories
+ */
+export const leaders = pgTable('leaders', {
+    id: serial('id').primaryKey(),
+    playerId: integer('player_id').references(() => players.id).notNull(),
+    season: integer('season').notNull(),
+    statType: text('stat_type').notNull(), // pts, reb, ast, stl, blk
+    value: real('value').notNull(),
+    rank: integer('rank').notNull(),
+    gamesPlayed: integer('games_played').notNull(),
+}, (table) => ({
+    playerSeasonStatUnique: unique('leaders_player_season_stat_unique').on(table.playerId, table.season, table.statType),
+    playerIdIdx: index('leaders_player_id_idx').on(table.playerId),
+    seasonIdx: index('leaders_season_idx').on(table.season),
+    statTypeIdx: index('leaders_stat_type_idx').on(table.statType),
+    rankIdx: index('leaders_rank_idx').on(table.rank),
+}));
 // ============================================================================
 // Relations (for Drizzle joins)
 // ============================================================================
@@ -98,6 +117,7 @@ export const playersRelations = relations(players, ({ one, many }) => ({
         references: [teams.id],
     }),
     boxScores: many(boxScores),
+    leaders: many(leaders),
 }));
 export const gamesRelations = relations(games, ({ one, many }) => ({
     homeTeam: one(teams, {
@@ -124,6 +144,12 @@ export const boxScoresRelations = relations(boxScores, ({ one }) => ({
     team: one(teams, {
         fields: [boxScores.teamId],
         references: [teams.id],
+    }),
+}));
+export const leadersRelations = relations(leaders, ({ one }) => ({
+    player: one(players, {
+        fields: [leaders.playerId],
+        references: [players.id],
     }),
 }));
 //# sourceMappingURL=schema.js.map

@@ -46,10 +46,10 @@ livingston-backend/
 ### Prerequisites
 
 - Node.js 18+ 
-- PostgreSQL 14+
+- Docker & Docker Compose (for local development)
 - BallDontLie API key (free tier available at https://balldontlie.io)
 
-### Installation
+### Option 1: Docker Setup (Recommended for Development)
 
 1. **Clone and install dependencies:**
 
@@ -57,14 +57,32 @@ livingston-backend/
 npm install
 ```
 
-2. **Configure environment variables:**
+2. **Start PostgreSQL with Docker:**
 
 ```bash
-cp .env.example .env
-# Edit .env with your database credentials and API key
+# Start PostgreSQL and pgAdmin
+npm run docker:up
+
+# Check if services are running
+npm run docker:logs
 ```
 
-3. **Setup database:**
+3. **Configure environment variables:**
+
+Create a `.env` file with:
+```bash
+# Database Configuration for Docker
+DATABASE_URL=postgresql://livingston:livingston123@localhost:5432/livingston
+
+# BallDontLie API Configuration
+BALLDONTLIE_BASE=https://api.balldontlie.io/v1
+BALLDONTLIE_KEY=your_api_key_here
+
+# Server Configuration
+PORT=3000
+```
+
+4. **Setup database:**
 
 ```bash
 # Generate migration files from schema
@@ -73,13 +91,29 @@ npm run db:gen
 # Run migrations
 npm run db:migrate
 
-# Or push schema directly (development)
-npm run db:push
+# Create materialized views (run after migrations)
+npm run docker:db -c "CREATE MATERIALIZED VIEW IF NOT EXISTS season_player_stats AS SELECT p.id AS player_id, g.season, COUNT(DISTINCT g.id) AS games_played, AVG(b.points) AS ppg, AVG(b.assists) AS apg, AVG(b.rebounds) AS rpg, AVG(b.steals) AS spg, AVG(b.blocks) AS bpg, AVG(b.turnovers) AS tovpg, AVG(NULLIF(b.fgm,0)/NULLIF(b.fga,0)) AS fg_pct, AVG(NULLIF(b.tpm,0)/NULLIF(b.tpa,0)) AS three_pct, AVG(NULLIF(b.ftm,0)/NULLIF(b.fta,0)) AS ft_pct FROM box_scores b JOIN games g ON b.game_id = g.id JOIN players p ON b.player_id = p.id GROUP BY p.id, g.season;"
 ```
 
-4. **Create materialized views:**
+### Option 2: Local PostgreSQL Setup
 
+1. **Install PostgreSQL locally** (version 14+)
+
+2. **Create database:**
 ```bash
+createdb livingston
+```
+
+3. **Configure environment variables:**
+```bash
+cp .env.example .env
+# Edit .env with your local database credentials
+```
+
+4. **Setup database:**
+```bash
+npm run db:gen
+npm run db:migrate
 psql $DATABASE_URL < src/sql/materialized_views.sql
 ```
 
@@ -168,6 +202,57 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY season_team_stats;
 | `BALLDONTLIE_BASE` | BallDontLie API base URL | `https://api.balldontlie.io/v1` |
 | `BALLDONTLIE_KEY` | BallDontLie API key | Required |
 | `PORT` | Health check server port | `3000` |
+
+## 🐳 Docker Development
+
+### Docker Services
+
+The `docker-compose.yml` provides:
+
+- **PostgreSQL 15**: Database server on port 5432
+- **pgAdmin**: Web-based database admin on port 8080
+
+### Docker Commands
+
+```bash
+# Start all services
+npm run docker:up
+
+# Stop all services
+npm run docker:down
+
+# View logs
+npm run docker:logs
+
+# Connect to database
+npm run docker:db
+
+# Reset everything (removes all data)
+npm run docker:reset
+```
+
+### Accessing Services
+
+- **PostgreSQL**: `localhost:5432`
+  - Database: `livingston`
+  - Username: `livingston`
+  - Password: `livingston123`
+
+- **pgAdmin**: `http://localhost:8080`
+  - Email: `admin@livingston.com`
+  - Password: `admin123`
+
+### Adding pgAdmin Server Connection
+
+1. Open pgAdmin at `http://localhost:8080`
+2. Right-click "Servers" → "Create" → "Server"
+3. **General tab**: Name = "Livingston Local"
+4. **Connection tab**:
+   - Host: `postgres` (Docker service name)
+   - Port: `5432`
+   - Database: `livingston`
+   - Username: `livingston`
+   - Password: `livingston123`
 
 ## 🧪 Development
 

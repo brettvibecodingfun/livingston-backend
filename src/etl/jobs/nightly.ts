@@ -7,18 +7,21 @@ import {
   fetchPlayers,
   fetchGamesByDate,
   fetchBoxScoresByGame,
+  fetchLeaders,
 } from '../providers/balldontlie.js';
 import {
   mapTeamToDb,
   mapPlayerToDb,
   mapGameToDb,
   mapBoxScoreToDb,
+  mapLeaderToDb,
 } from '../maps.js';
 import {
   upsertTeam,
   upsertPlayer,
   upsertGame,
   upsertBoxScore,
+  upsertLeader,
   buildTeamIdMap,
   buildPlayerIdMap,
 } from '../upserts.js';
@@ -80,6 +83,7 @@ export async function runNightlyJob(options: { season?: number } = {}) {
   let playersCount = 0;
   let gamesCount = 0;
   let boxScoresCount = 0;
+  let leadersCount = 0;
 
   try {
     // ========================================================================
@@ -210,9 +214,41 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     }
 
     // ========================================================================
-    // Step 5: Refresh materialized views
+    // Step 5: Load and upsert season leaders
     // ========================================================================
-    console.log('🔄 Step 5: Refreshing materialized views...');
+    console.log('🏆 Step 5: Loading season leaders...');
+    const statTypes = ['pts', 'reb', 'ast', 'stl', 'blk'];
+    
+    for (const statType of statTypes) {
+      console.log(`  📊 Loading ${statType} leaders...`);
+      
+      const apiLeaders = await retryWithBackoff(() =>
+        fetchLeaders(season, statType)
+      );
+      console.log(`    📥 Fetched ${apiLeaders.length} ${statType} leaders`);
+
+      for (const apiLeader of apiLeaders) {
+        // Resolve player FK
+        const playerId = playerIdMap.get(apiLeader.player.id);
+        
+        if (!playerId) {
+          console.warn(`    ⚠️  Missing player FK for leader ${apiLeader.player.first_name} ${apiLeader.player.last_name}, skipping`);
+          continue;
+        }
+        
+        const leaderRow = mapLeaderToDb(apiLeader, playerId);
+        await upsertLeader(leaderRow);
+        leadersCount++;
+      }
+      
+      console.log(`    ✅ Upserted ${apiLeaders.length} ${statType} leaders`);
+    }
+    console.log(`  ✅ Total leaders: ${leadersCount}\n`);
+
+    // ========================================================================
+    // Step 6: Refresh materialized views
+    // ========================================================================
+    console.log('🔄 Step 6: Refreshing materialized views...');
     try {
       const refreshSql = readFileSync(
         join(process.cwd(), 'src/sql/refresh.sql'),
@@ -238,6 +274,7 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     console.log(`   • Players: ${playersCount}`);
     console.log(`   • Games: ${gamesCount}`);
     console.log(`   • Box Scores: ${boxScoresCount}`);
+    console.log(`   • Leaders: ${leadersCount}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   } catch (error) {

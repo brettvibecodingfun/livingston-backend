@@ -93,10 +93,33 @@ declare const BoxScoreSchema: z.ZodObject<{
     pf: z.ZodNullable<z.ZodNumber>;
     pts: z.ZodNullable<z.ZodNumber>;
 }, z.core.$strip>;
+declare const LeaderSchema: z.ZodObject<{
+    player: z.ZodObject<{
+        id: z.ZodNumber;
+        first_name: z.ZodString;
+        last_name: z.ZodString;
+        position: z.ZodNullable<z.ZodString>;
+        height: z.ZodNullable<z.ZodString>;
+        weight: z.ZodNullable<z.ZodString>;
+        jersey_number: z.ZodNullable<z.ZodString>;
+        college: z.ZodNullable<z.ZodString>;
+        country: z.ZodNullable<z.ZodString>;
+        draft_year: z.ZodNullable<z.ZodNumber>;
+        draft_round: z.ZodNullable<z.ZodNumber>;
+        draft_number: z.ZodNullable<z.ZodNumber>;
+        team_id: z.ZodNullable<z.ZodNumber>;
+    }, z.core.$strip>;
+    value: z.ZodNumber;
+    stat_type: z.ZodString;
+    rank: z.ZodNumber;
+    season: z.ZodNumber;
+    games_played: z.ZodNumber;
+}, z.core.$strip>;
 export type ApiTeam = z.infer<typeof TeamSchema>;
 export type ApiPlayer = z.infer<typeof PlayerSchema>;
 export type ApiGame = z.infer<typeof GameSchema>;
 export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
+export type ApiLeader = z.infer<typeof LeaderSchema>;
 /**
  * Fetch all NBA teams
  */
@@ -117,6 +140,10 @@ export declare function fetchGamesByDate(dateISO: string): Promise<ApiGame[]>;
  * Fetch box scores for a specific game by game API ID
  */
 export declare function fetchBoxScoresByGame(gameApiId: number): Promise<ApiBoxScore[]>;
+/**
+ * Fetch season leaders for a specific statistical category
+ */
+export declare function fetchLeaders(season: number, statType: string): Promise<ApiLeader[]>;
 /**
  * Parse minutes string to decimal number (e.g., "25:30" -> 25.5)
  */

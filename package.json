@@ -12,8 +12,15 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "etl:nightly": "ts-node --project tsconfig.node.json src/cli/nightly.ts",
-    "etl:inc": "ts-node --project tsconfig.node.json src/cli/incremental.ts"
+    "etl:nightly": "npm install && npm run build && node dist/cli/nightly.js",
+    "etl:inc": "ts-node --project tsconfig.node.json src/cli/incremental.ts",
+    "query:warriors": "node query-warriors.js",
+    "query:ppg": "node query-ppg-leaders.js",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:db": "docker-compose exec postgres psql -U livingston -d livingston",
+    "docker:reset": "docker-compose down -v && docker-compose up -d"
   },
   "keywords": ["nba", "etl", "drizzle", "postgres"],
   "author": "",

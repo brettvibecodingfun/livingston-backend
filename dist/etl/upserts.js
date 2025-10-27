@@ -1,5 +1,5 @@
 import { db } from '../db/client.js';
-import { teams, players, games, boxScores } from '../db/schema.js';
+import { teams, players, games, boxScores, leaders } from '../db/schema.js';
 import { eq, sql, inArray } from 'drizzle-orm';
 /**
  * Upsert a team by api_id
@@ -100,6 +100,26 @@ export async function upsertBoxScore(row) {
         },
     })
         .returning({ id: boxScores.id });
+    return result[0].id;
+}
+/**
+ * Upsert a leader by (player_id, season, stat_type)
+ * ON CONFLICT (player_id, season, stat_type) DO UPDATE
+ * Returns the local database id
+ */
+export async function upsertLeader(row) {
+    const result = await db
+        .insert(leaders)
+        .values(row)
+        .onConflictDoUpdate({
+        target: [leaders.playerId, leaders.season, leaders.statType],
+        set: {
+            value: sql `EXCLUDED.value`,
+            rank: sql `EXCLUDED.rank`,
+            gamesPlayed: sql `EXCLUDED.games_played`,
+        },
+    })
+        .returning({ id: leaders.id });
     return result[0].id;
 }
 // ============================================================================

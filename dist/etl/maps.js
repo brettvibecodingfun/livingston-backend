@@ -84,4 +84,18 @@ export function mapBoxScoreToDb(apiBoxScore, gameId, playerId, teamId) {
         fta: apiBoxScore.fta,
     };
 }
+/**
+ * Map API leader to DB leader shape
+ * Note: playerId will be resolved via player api_id lookup
+ */
+export function mapLeaderToDb(apiLeader, playerId) {
+    return {
+        playerId: playerId,
+        season: apiLeader.season,
+        statType: apiLeader.stat_type,
+        value: apiLeader.value,
+        rank: apiLeader.rank,
+        gamesPlayed: apiLeader.games_played,
+    };
+}
 //# sourceMappingURL=maps.js.map

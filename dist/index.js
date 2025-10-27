@@ -28,7 +28,7 @@ const server = createServer(async (req, res) => {
             res.end(JSON.stringify({
                 status: 'ok',
                 timestamp: new Date().toISOString(),
-                service: 'monta-backend',
+                service: 'livingston-backend',
                 version: '1.0.0',
                 database: {
                     status: dbStatus,
@@ -42,7 +42,7 @@ const server = createServer(async (req, res) => {
             res.end(JSON.stringify({
                 status: 'error',
                 timestamp: new Date().toISOString(),
-                service: 'monta-backend',
+                service: 'livingston-backend',
                 database: {
                     status: 'error',
                     error: error instanceof Error ? error.message : 'Unknown error',
@@ -84,7 +84,7 @@ process.on('SIGINT', async () => {
 // Start server
 server.listen(PORT, () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🏀 Monta Backend - NBA Stats ETL');
+    console.log('🏀 Livingston Backend - NBA Stats ETL');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`📡 Health check: http://localhost:${PORT}/health`);

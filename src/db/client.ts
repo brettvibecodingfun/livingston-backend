@@ -1,6 +1,10 @@
+import dotenv from 'dotenv';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from './schema.js';
+
+// Load environment variables from .env file
+dotenv.config();
 
 const { Pool } = pg;
 
@@ -17,6 +21,9 @@ export const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // Create Drizzle client instance

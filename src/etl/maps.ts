@@ -1,5 +1,5 @@
-import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore } from './providers/balldontlie.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore } from '../db/schema.js';
+import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader } from './providers/balldontlie.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader } from '../db/schema.js';
 
 /**
  * Map API team to DB team shape
@@ -99,5 +99,23 @@ export function mapBoxScoreToDb(
     tpa: apiBoxScore.fg3a, // three-pointers attempted
     ftm: apiBoxScore.ftm,
     fta: apiBoxScore.fta,
+  };
+}
+
+/**
+ * Map API leader to DB leader shape
+ * Note: playerId will be resolved via player api_id lookup
+ */
+export function mapLeaderToDb(
+  apiLeader: ApiLeader,
+  playerId: number
+): NewLeader {
+  return {
+    playerId: playerId,
+    season: apiLeader.season,
+    statType: apiLeader.stat_type,
+    value: apiLeader.value,
+    rank: apiLeader.rank,
+    gamesPlayed: apiLeader.games_played,
   };
 }

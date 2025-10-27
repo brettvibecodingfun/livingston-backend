@@ -110,6 +110,29 @@ const BoxScoreSchema = z.object({
   pts: z.number().nullable(),
 });
 
+const LeaderSchema = z.object({
+  player: z.object({
+    id: z.number(),
+    first_name: z.string(),
+    last_name: z.string(),
+    position: z.string().nullable(),
+    height: z.string().nullable(),
+    weight: z.string().nullable(),
+    jersey_number: z.string().nullable(),
+    college: z.string().nullable(),
+    country: z.string().nullable(),
+    draft_year: z.number().nullable(),
+    draft_round: z.number().nullable(),
+    draft_number: z.number().nullable(),
+    team_id: z.number().nullable(),
+  }),
+  value: z.number(),
+  stat_type: z.string(),
+  rank: z.number(),
+  season: z.number(),
+  games_played: z.number(),
+});
+
 const PaginatedResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
     data: z.array(dataSchema),
@@ -125,6 +148,7 @@ export type ApiTeam = z.infer<typeof TeamSchema>;
 export type ApiPlayer = z.infer<typeof PlayerSchema>;
 export type ApiGame = z.infer<typeof GameSchema>;
 export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
+export type ApiLeader = z.infer<typeof LeaderSchema>;
 
 // ============================================================================
 // Helper Functions
@@ -289,6 +313,21 @@ export async function fetchBoxScoresByGame(gameApiId: number): Promise<ApiBoxSco
   };
   
   return await fetchAllPages<ApiBoxScore>('/stats', BoxScoreSchema, params);
+}
+
+/**
+ * Fetch season leaders for a specific statistical category
+ */
+export async function fetchLeaders(season: number, statType: string): Promise<ApiLeader[]> {
+  console.log(`🏆 Fetching ${statType} leaders for season ${season}...`);
+  
+  const params = {
+    season,
+    stat_type: statType,
+  };
+  
+  const response = await fetchFromAPI('/leaders', z.object({ data: z.array(LeaderSchema) }), params);
+  return response.data;
 }
 
 // ============================================================================

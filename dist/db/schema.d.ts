@@ -756,6 +756,136 @@ export declare const boxScores: import("drizzle-orm/pg-core").PgTableWithColumns
     };
     dialect: "pg";
 }>;
+/**
+ * Leaders table
+ * Stores NBA season leaders for various statistical categories
+ */
+export declare const leaders: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "leaders";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "leaders";
+            dataType: "number";
+            columnType: "PgSerial";
+            data: number;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        playerId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "player_id";
+            tableName: "leaders";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        season: import("drizzle-orm/pg-core").PgColumn<{
+            name: "season";
+            tableName: "leaders";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        statType: import("drizzle-orm/pg-core").PgColumn<{
+            name: "stat_type";
+            tableName: "leaders";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        value: import("drizzle-orm/pg-core").PgColumn<{
+            name: "value";
+            tableName: "leaders";
+            dataType: "number";
+            columnType: "PgReal";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        rank: import("drizzle-orm/pg-core").PgColumn<{
+            name: "rank";
+            tableName: "leaders";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        gamesPlayed: import("drizzle-orm/pg-core").PgColumn<{
+            name: "games_played";
+            tableName: "leaders";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
 export declare const teamsRelations: import("drizzle-orm").Relations<"teams", {
     players: import("drizzle-orm").Many<"players">;
     homeGames: import("drizzle-orm").Many<"games">;
@@ -765,6 +895,7 @@ export declare const teamsRelations: import("drizzle-orm").Relations<"teams", {
 export declare const playersRelations: import("drizzle-orm").Relations<"players", {
     team: import("drizzle-orm").One<"teams", false>;
     boxScores: import("drizzle-orm").Many<"box_scores">;
+    leaders: import("drizzle-orm").Many<"leaders">;
 }>;
 export declare const gamesRelations: import("drizzle-orm").Relations<"games", {
     homeTeam: import("drizzle-orm").One<"teams", true>;
@@ -776,6 +907,9 @@ export declare const boxScoresRelations: import("drizzle-orm").Relations<"box_sc
     player: import("drizzle-orm").One<"players", true>;
     team: import("drizzle-orm").One<"teams", true>;
 }>;
+export declare const leadersRelations: import("drizzle-orm").Relations<"leaders", {
+    player: import("drizzle-orm").One<"players", true>;
+}>;
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
 export type Player = typeof players.$inferSelect;
@@ -784,4 +918,6 @@ export type Game = typeof games.$inferSelect;
 export type NewGame = typeof games.$inferInsert;
 export type BoxScore = typeof boxScores.$inferSelect;
 export type NewBoxScore = typeof boxScores.$inferInsert;
+export type Leader = typeof leaders.$inferSelect;
+export type NewLeader = typeof leaders.$inferInsert;
 //# sourceMappingURL=schema.d.ts.map

@@ -1,4 +1,4 @@
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore } from '../db/schema.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader } from '../db/schema.js';
 /**
  * Upsert a team by api_id
  * ON CONFLICT (api_id) DO UPDATE
@@ -23,6 +23,12 @@ export declare function upsertGame(row: NewGame): Promise<number>;
  * Returns the local database id
  */
 export declare function upsertBoxScore(row: NewBoxScore): Promise<number>;
+/**
+ * Upsert a leader by (player_id, season, stat_type)
+ * ON CONFLICT (player_id, season, stat_type) DO UPDATE
+ * Returns the local database id
+ */
+export declare function upsertLeader(row: NewLeader): Promise<number>;
 /**
  * Get team database id by api_id
  */

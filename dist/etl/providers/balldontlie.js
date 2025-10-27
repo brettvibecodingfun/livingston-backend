@@ -102,6 +102,28 @@ const BoxScoreSchema = z.object({
     pf: z.number().nullable(),
     pts: z.number().nullable(),
 });
+const LeaderSchema = z.object({
+    player: z.object({
+        id: z.number(),
+        first_name: z.string(),
+        last_name: z.string(),
+        position: z.string().nullable(),
+        height: z.string().nullable(),
+        weight: z.string().nullable(),
+        jersey_number: z.string().nullable(),
+        college: z.string().nullable(),
+        country: z.string().nullable(),
+        draft_year: z.number().nullable(),
+        draft_round: z.number().nullable(),
+        draft_number: z.number().nullable(),
+        team_id: z.number().nullable(),
+    }),
+    value: z.number(),
+    stat_type: z.string(),
+    rank: z.number(),
+    season: z.number(),
+    games_played: z.number(),
+});
 const PaginatedResponseSchema = (dataSchema) => z.object({
     data: z.array(dataSchema),
     meta: z.object({
@@ -233,6 +255,18 @@ export async function fetchBoxScoresByGame(gameApiId) {
         game_ids: [gameApiId],
     };
     return await fetchAllPages('/stats', BoxScoreSchema, params);
+}
+/**
+ * Fetch season leaders for a specific statistical category
+ */
+export async function fetchLeaders(season, statType) {
+    console.log(`🏆 Fetching ${statType} leaders for season ${season}...`);
+    const params = {
+        season,
+        stat_type: statType,
+    };
+    const response = await fetchFromAPI('/leaders', z.object({ data: z.array(LeaderSchema) }), params);
+    return response.data;
 }
 // ============================================================================
 // Data Normalization Helpers
