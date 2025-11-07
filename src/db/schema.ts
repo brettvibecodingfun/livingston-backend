@@ -31,6 +31,8 @@ export const players = pgTable('players', {
   position: text('position'),
   height: text('height'),
   weight: text('weight'),
+  college: text('college'),
+  draftYear: integer('draft_year'),
   birthdate: date('birthdate'),
 }, (table) => ({
   apiIdIdx: index('players_api_id_idx').on(table.apiId),

@@ -29,6 +29,8 @@ export function mapPlayerToDb(apiPlayer: ApiPlayer, teamId: number | null): NewP
     position: apiPlayer.position,
     height: apiPlayer.height,
     weight: apiPlayer.weight,
+    college: apiPlayer.college ?? null,
+    draftYear: apiPlayer.draft_year ?? null,
     birthdate: undefined, // API doesn't provide birthdate
   };
 }

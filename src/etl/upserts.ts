@@ -46,6 +46,8 @@ export async function upsertPlayer(row: NewPlayer): Promise<number> {
         position: sql`EXCLUDED.position`,
         height: sql`EXCLUDED.height`,
         weight: sql`EXCLUDED.weight`,
+        college: sql`EXCLUDED.college`,
+        draftYear: sql`EXCLUDED.draft_year`,
         birthdate: sql`EXCLUDED.birthdate`,
       },
     })
