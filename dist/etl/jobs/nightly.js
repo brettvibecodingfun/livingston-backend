@@ -2,9 +2,9 @@ import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { db, pool } from '../../db/client.js';
-import { fetchTeams, fetchPlayers, fetchGamesByDate, fetchBoxScoresByGame, fetchLeaders, } from '../providers/balldontlie.js';
-import { mapTeamToDb, mapPlayerToDb, mapGameToDb, mapBoxScoreToDb, mapLeaderToDb, } from '../maps.js';
-import { upsertTeam, upsertPlayer, upsertGame, upsertBoxScore, upsertLeader, buildTeamIdMap, buildPlayerIdMap, } from '../upserts.js';
+import { fetchTeams, fetchPlayers, fetchGamesByDate, fetchBoxScoresByGame, fetchLeaders, fetchStandings, } from '../providers/balldontlie.js';
+import { mapTeamToDb, mapPlayerToDb, mapGameToDb, mapBoxScoreToDb, mapLeaderToDb, mapStandingToDb, } from '../maps.js';
+import { upsertTeam, upsertPlayer, upsertGame, upsertBoxScore, upsertLeader, upsertStanding, buildTeamIdMap, buildPlayerIdMap, } from '../upserts.js';
 dotenv.config();
 /**
  * Get yesterday's date in America/Chicago timezone
@@ -52,6 +52,7 @@ export async function runNightlyJob(options = {}) {
     let gamesCount = 0;
     let boxScoresCount = 0;
     let leadersCount = 0;
+    let standingsCount = 0;
     try {
         // ========================================================================
         // Step 1: Load and upsert teams
@@ -176,9 +177,27 @@ export async function runNightlyJob(options = {}) {
         }
         console.log(`  ✅ Total leaders: ${leadersCount}\n`);
         // ========================================================================
-        // Step 6: Refresh materialized views
+        // Step 6: Load and upsert team standings
         // ========================================================================
-        console.log('🔄 Step 6: Refreshing materialized views...');
+        console.log('📈 Step 6: Loading season standings...');
+        const standingsSeason = 2025;
+        const apiStandings = await retryWithBackoff(() => fetchStandings(standingsSeason));
+        console.log(`  📥 Fetched ${apiStandings.length} standings rows for season ${standingsSeason}`);
+        for (const apiStanding of apiStandings) {
+            const teamId = teamIdMap.get(apiStanding.team.id);
+            if (!teamId) {
+                console.warn(`  ⚠️  Missing team FK for standing ${apiStanding.team.name}, skipping`);
+                continue;
+            }
+            const standingRow = mapStandingToDb(apiStanding, teamId);
+            await upsertStanding(standingRow);
+            standingsCount++;
+        }
+        console.log(`  ✅ Upserted ${standingsCount} standings\n`);
+        // ========================================================================
+        // Step 7: Refresh materialized views
+        // ========================================================================
+        console.log('🔄 Step 7: Refreshing materialized views...');
         try {
             const refreshSql = readFileSync(join(process.cwd(), 'src/sql/refresh.sql'), 'utf-8');
             await pool.query(refreshSql);
@@ -202,6 +221,7 @@ export async function runNightlyJob(options = {}) {
         console.log(`   • Games: ${gamesCount}`);
         console.log(`   • Box Scores: ${boxScoresCount}`);
         console.log(`   • Leaders: ${leadersCount}`);
+        console.log(`   • Standings: ${standingsCount}`);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     }
     catch (error) {

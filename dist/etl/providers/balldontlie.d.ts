@@ -115,11 +115,31 @@ declare const LeaderSchema: z.ZodObject<{
     season: z.ZodNumber;
     games_played: z.ZodNumber;
 }, z.core.$strip>;
+declare const StandingSchema: z.ZodObject<{
+    team: z.ZodObject<{
+        id: z.ZodNumber;
+        name: z.ZodString;
+        abbreviation: z.ZodString;
+        city: z.ZodString;
+        conference: z.ZodString;
+        division: z.ZodString;
+    }, z.core.$strip>;
+    conference_record: z.ZodNullable<z.ZodString>;
+    conference_rank: z.ZodNullable<z.ZodNumber>;
+    division_record: z.ZodNullable<z.ZodString>;
+    division_rank: z.ZodNullable<z.ZodNumber>;
+    wins: z.ZodNumber;
+    losses: z.ZodNumber;
+    home_record: z.ZodNullable<z.ZodString>;
+    road_record: z.ZodNullable<z.ZodString>;
+    season: z.ZodNumber;
+}, z.core.$strip>;
 export type ApiTeam = z.infer<typeof TeamSchema>;
 export type ApiPlayer = z.infer<typeof PlayerSchema>;
 export type ApiGame = z.infer<typeof GameSchema>;
 export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
 export type ApiLeader = z.infer<typeof LeaderSchema>;
+export type ApiStanding = z.infer<typeof StandingSchema>;
 /**
  * Fetch all NBA teams
  */
@@ -144,6 +164,10 @@ export declare function fetchBoxScoresByGame(gameApiId: number): Promise<ApiBoxS
  * Fetch season leaders for a specific statistical category
  */
 export declare function fetchLeaders(season: number, statType: string): Promise<ApiLeader[]>;
+/**
+ * Fetch standings for a specific season
+ */
+export declare function fetchStandings(season: number): Promise<ApiStanding[]>;
 /**
  * Parse minutes string to decimal number (e.g., "25:30" -> 25.5)
  */

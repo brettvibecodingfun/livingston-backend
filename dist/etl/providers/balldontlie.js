@@ -124,6 +124,18 @@ const LeaderSchema = z.object({
     season: z.number(),
     games_played: z.number(),
 });
+const StandingSchema = z.object({
+    team: TeamSchema,
+    conference_record: z.string().nullable(),
+    conference_rank: z.number().nullable(),
+    division_record: z.string().nullable(),
+    division_rank: z.number().nullable(),
+    wins: z.number(),
+    losses: z.number(),
+    home_record: z.string().nullable(),
+    road_record: z.string().nullable(),
+    season: z.number(),
+});
 const PaginatedResponseSchema = (dataSchema) => z.object({
     data: z.array(dataSchema),
     meta: z.object({
@@ -266,6 +278,15 @@ export async function fetchLeaders(season, statType) {
         stat_type: statType,
     };
     const response = await fetchFromAPI('/leaders', z.object({ data: z.array(LeaderSchema) }), params);
+    return response.data;
+}
+/**
+ * Fetch standings for a specific season
+ */
+export async function fetchStandings(season) {
+    console.log(`📈 Fetching standings for season ${season}...`);
+    const params = { season };
+    const response = await fetchFromAPI('/standings', z.object({ data: z.array(StandingSchema) }), params);
     return response.data;
 }
 // ============================================================================

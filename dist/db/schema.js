@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, date, real, unique, index } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, text, date, real, unique, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 /**
  * Teams table
@@ -29,6 +29,8 @@ export const players = pgTable('players', {
     position: text('position'),
     height: text('height'),
     weight: text('weight'),
+    college: text('college'),
+    draftYear: integer('draft_year'),
     birthdate: date('birthdate'),
 }, (table) => ({
     apiIdIdx: index('players_api_id_idx').on(table.apiId),
@@ -102,6 +104,27 @@ export const leaders = pgTable('leaders', {
     statTypeIdx: index('leaders_stat_type_idx').on(table.statType),
     rankIdx: index('leaders_rank_idx').on(table.rank),
 }));
+/**
+ * Standings table
+ * Stores NBA team standings for each season
+ */
+export const standings = pgTable('standings', {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id').references(() => teams.id).notNull(),
+    season: integer('season').notNull(),
+    wins: integer('wins').notNull(),
+    losses: integer('losses').notNull(),
+    conferenceRank: integer('conference_rank'),
+    divisionRank: integer('division_rank'),
+    conferenceRecord: text('conference_record'),
+    divisionRecord: text('division_record'),
+    homeRecord: text('home_record'),
+    roadRecord: text('road_record'),
+}, (table) => ({
+    teamSeasonUniqueIdx: uniqueIndex('standings_team_season_unique').on(table.teamId, table.season),
+    teamIdIdx: index('standings_team_id_idx').on(table.teamId),
+    seasonIdx: index('standings_season_idx').on(table.season),
+}));
 // ============================================================================
 // Relations (for Drizzle joins)
 // ============================================================================
@@ -110,6 +133,7 @@ export const teamsRelations = relations(teams, ({ many }) => ({
     homeGames: many(games, { relationName: 'homeTeam' }),
     awayGames: many(games, { relationName: 'awayTeam' }),
     boxScores: many(boxScores),
+    standings: many(standings),
 }));
 export const playersRelations = relations(players, ({ one, many }) => ({
     team: one(teams, {
@@ -150,6 +174,12 @@ export const leadersRelations = relations(leaders, ({ one }) => ({
     player: one(players, {
         fields: [leaders.playerId],
         references: [players.id],
+    }),
+}));
+export const standingsRelations = relations(standings, ({ one }) => ({
+    team: one(teams, {
+        fields: [standings.teamId],
+        references: [teams.id],
     }),
 }));
 //# sourceMappingURL=schema.js.map

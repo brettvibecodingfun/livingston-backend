@@ -1,6 +1,6 @@
 import { db } from '../db/client.js';
-import { teams, players, games, boxScores, leaders } from '../db/schema.js';
-import { eq, sql, inArray } from 'drizzle-orm';
+import { teams, players, games, boxScores, leaders, standings } from '../db/schema.js';
+import { eq, sql, inArray, and } from 'drizzle-orm';
 /**
  * Upsert a team by api_id
  * ON CONFLICT (api_id) DO UPDATE
@@ -42,6 +42,8 @@ export async function upsertPlayer(row) {
             position: sql `EXCLUDED.position`,
             height: sql `EXCLUDED.height`,
             weight: sql `EXCLUDED.weight`,
+            college: sql `EXCLUDED.college`,
+            draftYear: sql `EXCLUDED.draft_year`,
             birthdate: sql `EXCLUDED.birthdate`,
         },
     })
@@ -121,6 +123,21 @@ export async function upsertLeader(row) {
     })
         .returning({ id: leaders.id });
     return result[0].id;
+}
+/**
+ * Upsert team standings by (team_id, season)
+ */
+export async function upsertStanding(row) {
+    return await db.transaction(async (tx) => {
+        await tx
+            .delete(standings)
+            .where(and(eq(standings.teamId, row.teamId), eq(standings.season, row.season)));
+        const result = await tx
+            .insert(standings)
+            .values(row)
+            .returning({ id: standings.id });
+        return result[0].id;
+    });
 }
 // ============================================================================
 // Helper Functions for FK Resolution

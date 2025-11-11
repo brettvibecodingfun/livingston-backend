@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, date, real, unique, index } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, text, date, real, unique, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 /**
@@ -127,7 +127,7 @@ export const standings = pgTable('standings', {
   homeRecord: text('home_record'),
   roadRecord: text('road_record'),
 }, (table) => ({
-  teamSeasonUnique: unique('standings_team_season_unique').on(table.teamId, table.season),
+  teamSeasonUniqueIdx: uniqueIndex('standings_team_season_unique').on(table.teamId, table.season),
   teamIdIdx: index('standings_team_id_idx').on(table.teamId),
   seasonIdx: index('standings_season_idx').on(table.season),
 }));

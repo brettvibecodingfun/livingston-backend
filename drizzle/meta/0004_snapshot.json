@@ -1,6 +1,6 @@
 {
-  "id": "8b6e9c71-0cf6-4a63-9e25-3f8d3ad8d4f5",
-  "prevId": "0b0cb50e-1d27-4ecd-865c-2173c0cf1c1b",
+  "id": "245b4a9c-5a92-4c27-b4dc-4c8ee6843181",
+  "prevId": "8b6e9c71-0cf6-4a63-9e25-3f8d3ad8d4f5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -679,6 +679,151 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.standings": {
+      "name": "standings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season": {
+          "name": "season",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wins": {
+          "name": "wins",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "losses": {
+          "name": "losses",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conference_rank": {
+          "name": "conference_rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "division_rank": {
+          "name": "division_rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "conference_record": {
+          "name": "conference_record",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "division_record": {
+          "name": "division_record",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "home_record": {
+          "name": "home_record",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "road_record": {
+          "name": "road_record",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "standings_team_season_unique": {
+          "name": "standings_team_season_unique",
+          "columns": [
+            {
+              "expression": "team_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "season",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "standings_team_id_idx": {
+          "name": "standings_team_id_idx",
+          "columns": [
+            {
+              "expression": "team_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "standings_season_idx": {
+          "name": "standings_season_idx",
+          "columns": [
+            {
+              "expression": "season",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "standings_team_id_teams_id_fk": {
+          "name": "standings_team_id_teams_id_fk",
+          "tableFrom": "standings",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.teams": {
       "name": "teams",
       "schema": "",
@@ -754,151 +899,6 @@
           ]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.standings": {
-      "name": "standings",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "team_id": {
-          "name": "team_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "season": {
-          "name": "season",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "wins": {
-          "name": "wins",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "losses": {
-          "name": "losses",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "conference_rank": {
-          "name": "conference_rank",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "division_rank": {
-          "name": "division_rank",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "conference_record": {
-          "name": "conference_record",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "division_record": {
-          "name": "division_record",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "home_record": {
-          "name": "home_record",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "road_record": {
-          "name": "road_record",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "standings_team_id_idx": {
-          "name": "standings_team_id_idx",
-          "columns": [
-            {
-              "expression": "team_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "standings_season_idx": {
-          "name": "standings_season_idx",
-          "columns": [
-            {
-              "expression": "season",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "standings_team_season_unique": {
-          "name": "standings_team_season_unique",
-          "columns": [
-            {
-              "expression": "team_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "season",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "standings_team_id_teams_id_fk": {
-          "name": "standings_team_id_teams_id_fk",
-          "tableFrom": "standings",
-          "tableTo": "teams",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

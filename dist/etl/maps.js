@@ -25,6 +25,8 @@ export function mapPlayerToDb(apiPlayer, teamId) {
         position: apiPlayer.position,
         height: apiPlayer.height,
         weight: apiPlayer.weight,
+        college: apiPlayer.college ?? null,
+        draftYear: apiPlayer.draft_year ?? null,
         birthdate: undefined, // API doesn't provide birthdate
     };
 }
@@ -96,6 +98,20 @@ export function mapLeaderToDb(apiLeader, playerId) {
         value: apiLeader.value,
         rank: apiLeader.rank,
         gamesPlayed: apiLeader.games_played,
+    };
+}
+export function mapStandingToDb(apiStanding, teamId) {
+    return {
+        teamId,
+        season: apiStanding.season,
+        wins: apiStanding.wins,
+        losses: apiStanding.losses,
+        conferenceRank: apiStanding.conference_rank ?? null,
+        divisionRank: apiStanding.division_rank ?? null,
+        conferenceRecord: apiStanding.conference_record ?? null,
+        divisionRecord: apiStanding.division_record ?? null,
+        homeRecord: apiStanding.home_record ?? null,
+        roadRecord: apiStanding.road_record ?? null,
     };
 }
 //# sourceMappingURL=maps.js.map
