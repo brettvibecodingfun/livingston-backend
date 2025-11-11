@@ -110,6 +110,28 @@ export const leaders = pgTable('leaders', {
   rankIdx: index('leaders_rank_idx').on(table.rank),
 }));
 
+/**
+ * Standings table
+ * Stores NBA team standings for each season
+ */
+export const standings = pgTable('standings', {
+  id: serial('id').primaryKey(),
+  teamId: integer('team_id').references(() => teams.id).notNull(),
+  season: integer('season').notNull(),
+  wins: integer('wins').notNull(),
+  losses: integer('losses').notNull(),
+  conferenceRank: integer('conference_rank'),
+  divisionRank: integer('division_rank'),
+  conferenceRecord: text('conference_record'),
+  divisionRecord: text('division_record'),
+  homeRecord: text('home_record'),
+  roadRecord: text('road_record'),
+}, (table) => ({
+  teamSeasonUnique: unique('standings_team_season_unique').on(table.teamId, table.season),
+  teamIdIdx: index('standings_team_id_idx').on(table.teamId),
+  seasonIdx: index('standings_season_idx').on(table.season),
+}));
+
 // ============================================================================
 // Relations (for Drizzle joins)
 // ============================================================================
@@ -119,6 +141,7 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   homeGames: many(games, { relationName: 'homeTeam' }),
   awayGames: many(games, { relationName: 'awayTeam' }),
   boxScores: many(boxScores),
+  standings: many(standings),
 }));
 
 export const playersRelations = relations(players, ({ one, many }) => ({
@@ -166,6 +189,13 @@ export const leadersRelations = relations(leaders, ({ one }) => ({
   }),
 }));
 
+export const standingsRelations = relations(standings, ({ one }) => ({
+  team: one(teams, {
+    fields: [standings.teamId],
+    references: [teams.id],
+  }),
+}));
+
 // ============================================================================
 // Type Exports
 // ============================================================================
@@ -184,3 +214,6 @@ export type NewBoxScore = typeof boxScores.$inferInsert;
 
 export type Leader = typeof leaders.$inferSelect;
 export type NewLeader = typeof leaders.$inferInsert;
+
+export type Standing = typeof standings.$inferSelect;
+export type NewStanding = typeof standings.$inferInsert;

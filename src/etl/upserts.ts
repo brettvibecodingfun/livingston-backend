@@ -1,6 +1,6 @@
 import { db } from '../db/client.js';
-import { teams, players, games, boxScores, leaders } from '../db/schema.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader } from '../db/schema.js';
+import { teams, players, games, boxScores, leaders, standings } from '../db/schema.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding } from '../db/schema.js';
 import { eq, sql, inArray } from 'drizzle-orm';
 
 /**
@@ -132,6 +132,31 @@ export async function upsertLeader(row: NewLeader): Promise<number> {
       },
     })
     .returning({ id: leaders.id });
+
+  return result[0]!.id;
+}
+
+/**
+ * Upsert team standings by (team_id, season)
+ */
+export async function upsertStanding(row: NewStanding): Promise<number> {
+  const result = await db
+    .insert(standings)
+    .values(row)
+    .onConflictDoUpdate({
+      target: [standings.teamId, standings.season],
+      set: {
+        wins: sql`EXCLUDED.wins`,
+        losses: sql`EXCLUDED.losses`,
+        conferenceRank: sql`EXCLUDED.conference_rank`,
+        divisionRank: sql`EXCLUDED.division_rank`,
+        conferenceRecord: sql`EXCLUDED.conference_record`,
+        divisionRecord: sql`EXCLUDED.division_record`,
+        homeRecord: sql`EXCLUDED.home_record`,
+        roadRecord: sql`EXCLUDED.road_record`,
+      },
+    })
+    .returning({ id: standings.id });
 
   return result[0]!.id;
 }

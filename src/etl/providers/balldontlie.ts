@@ -133,6 +133,19 @@ const LeaderSchema = z.object({
   games_played: z.number(),
 });
 
+const StandingSchema = z.object({
+  team: TeamSchema,
+  conference_record: z.string().nullable(),
+  conference_rank: z.number().nullable(),
+  division_record: z.string().nullable(),
+  division_rank: z.number().nullable(),
+  wins: z.number(),
+  losses: z.number(),
+  home_record: z.string().nullable(),
+  road_record: z.string().nullable(),
+  season: z.number(),
+});
+
 const PaginatedResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
     data: z.array(dataSchema),
@@ -149,6 +162,7 @@ export type ApiPlayer = z.infer<typeof PlayerSchema>;
 export type ApiGame = z.infer<typeof GameSchema>;
 export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
 export type ApiLeader = z.infer<typeof LeaderSchema>;
+export type ApiStanding = z.infer<typeof StandingSchema>;
 
 // ============================================================================
 // Helper Functions
@@ -327,6 +341,23 @@ export async function fetchLeaders(season: number, statType: string): Promise<Ap
   };
   
   const response = await fetchFromAPI('/leaders', z.object({ data: z.array(LeaderSchema) }), params);
+  return response.data;
+}
+
+/**
+ * Fetch standings for a specific season
+ */
+export async function fetchStandings(season: number): Promise<ApiStanding[]> {
+  console.log(`📈 Fetching standings for season ${season}...`);
+
+  const params = { season };
+
+  const response = await fetchFromAPI(
+    '/standings',
+    z.object({ data: z.array(StandingSchema) }),
+    params
+  );
+
   return response.data;
 }
 

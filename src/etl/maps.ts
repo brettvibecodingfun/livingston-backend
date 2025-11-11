@@ -1,5 +1,5 @@
-import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader } from './providers/balldontlie.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader } from '../db/schema.js';
+import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding } from './providers/balldontlie.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding } from '../db/schema.js';
 
 /**
  * Map API team to DB team shape
@@ -119,5 +119,20 @@ export function mapLeaderToDb(
     value: apiLeader.value,
     rank: apiLeader.rank,
     gamesPlayed: apiLeader.games_played,
+  };
+}
+
+export function mapStandingToDb(apiStanding: ApiStanding, teamId: number): NewStanding {
+  return {
+    teamId,
+    season: apiStanding.season,
+    wins: apiStanding.wins,
+    losses: apiStanding.losses,
+    conferenceRank: apiStanding.conference_rank ?? null,
+    divisionRank: apiStanding.division_rank ?? null,
+    conferenceRecord: apiStanding.conference_record ?? null,
+    divisionRecord: apiStanding.division_record ?? null,
+    homeRecord: apiStanding.home_record ?? null,
+    roadRecord: apiStanding.road_record ?? null,
   };
 }
