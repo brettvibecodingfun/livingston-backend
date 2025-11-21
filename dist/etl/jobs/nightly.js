@@ -2,9 +2,9 @@ import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { db, pool } from '../../db/client.js';
-import { fetchTeams, fetchPlayers, fetchGamesByDate, fetchBoxScoresByGame, fetchLeaders, fetchStandings, } from '../providers/balldontlie.js';
-import { mapTeamToDb, mapPlayerToDb, mapGameToDb, mapBoxScoreToDb, mapLeaderToDb, mapStandingToDb, } from '../maps.js';
-import { upsertTeam, upsertPlayer, upsertGame, upsertBoxScore, upsertLeader, upsertStanding, buildTeamIdMap, buildPlayerIdMap, } from '../upserts.js';
+import { fetchTeams, fetchPlayers, fetchGamesByDate, fetchBoxScoresByGame, fetchLeaders, fetchStandings, fetchSeasonAverages, } from '../providers/balldontlie.js';
+import { mapTeamToDb, mapPlayerToDb, mapGameToDb, mapBoxScoreToDb, mapLeaderToDb, mapStandingToDb, mapSeasonAverageToDb, } from '../maps.js';
+import { upsertTeam, upsertPlayer, upsertGame, upsertBoxScore, upsertLeader, upsertStanding, upsertSeasonAverage, buildTeamIdMap, buildPlayerIdMap, } from '../upserts.js';
 dotenv.config();
 /**
  * Get yesterday's date in America/Chicago timezone
@@ -53,6 +53,7 @@ export async function runNightlyJob(options = {}) {
     let boxScoresCount = 0;
     let leadersCount = 0;
     let standingsCount = 0;
+    let seasonAveragesCount = 0;
     try {
         // ========================================================================
         // Step 1: Load and upsert teams
@@ -98,6 +99,8 @@ export async function runNightlyJob(options = {}) {
         // Build player ID map for FK resolution
         const playerApiIds = apiPlayers.map(p => p.id);
         const playerIdMap = await buildPlayerIdMap(playerApiIds);
+        // Store player API IDs for season averages fetch
+        const playerApiIdsForAverages = [...playerApiIds];
         // ========================================================================
         // Step 3: Load and upsert yesterday's games
         // ========================================================================
@@ -195,18 +198,35 @@ export async function runNightlyJob(options = {}) {
         }
         console.log(`  ✅ Upserted ${standingsCount} standings\n`);
         // ========================================================================
-        // Step 7: Refresh materialized views
+        // Step 7: Load and upsert season averages (includes shooting percentages)
         // ========================================================================
-        console.log('🔄 Step 7: Refreshing materialized views...');
-        try {
-            const refreshSql = readFileSync(join(process.cwd(), 'src/sql/refresh.sql'), 'utf-8');
-            await pool.query(refreshSql);
-            console.log('  ✅ Materialized views refreshed\n');
+        console.log('📊 Step 7: Loading season averages...');
+        // Fetch season averages filtered by the player IDs we just loaded
+        const apiSeasonAverages = await retryWithBackoff(() => fetchSeasonAverages(season, 'regular', playerApiIdsForAverages));
+        console.log(`  📥 Fetched ${apiSeasonAverages.length} season averages for season ${season}`);
+        for (const apiSeasonAverage of apiSeasonAverages) {
+            // player.id and season are guaranteed by fetchSeasonAverages filter
+            const playerApiId = apiSeasonAverage.player?.id;
+            if (!playerApiId) {
+                console.warn(`  ⚠️  Season average entry missing player.id, skipping`);
+                continue;
+            }
+            const playerId = playerIdMap.get(playerApiId);
+            if (!playerId) {
+                console.warn(`  ⚠️  Missing player FK for season average player_id ${playerApiId}, skipping`);
+                continue;
+            }
+            try {
+                const seasonAverageRow = mapSeasonAverageToDb(apiSeasonAverage, playerId);
+                await upsertSeasonAverage(seasonAverageRow);
+                seasonAveragesCount++;
+            }
+            catch (error) {
+                console.warn(`  ⚠️  Error mapping season average for player_id ${playerApiId}:`, error);
+                continue;
+            }
         }
-        catch (error) {
-            console.warn('  ⚠️  Failed to refresh materialized views:', error);
-            console.warn('  ℹ️  View may not exist yet. Run: psql $DATABASE_URL < src/sql/materialized_views.sql\n');
-        }
+        console.log(`  ✅ Upserted ${seasonAveragesCount} season averages\n`);
         // ========================================================================
         // Summary
         // ========================================================================
@@ -222,6 +242,7 @@ export async function runNightlyJob(options = {}) {
         console.log(`   • Box Scores: ${boxScoresCount}`);
         console.log(`   • Leaders: ${leadersCount}`);
         console.log(`   • Standings: ${standingsCount}`);
+        console.log(`   • Season Averages: ${seasonAveragesCount}`);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     }
     catch (error) {

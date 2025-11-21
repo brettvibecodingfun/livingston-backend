@@ -1,5 +1,5 @@
-import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding } from './providers/balldontlie.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding } from '../db/schema.js';
+import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding, ApiSeasonAverage } from './providers/balldontlie.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage } from '../db/schema.js';
 /**
  * Map API team to DB team shape
  */
@@ -30,4 +30,10 @@ export declare function mapBoxScoreToDb(apiBoxScore: ApiBoxScore, gameId: number
  */
 export declare function mapLeaderToDb(apiLeader: ApiLeader, playerId: number): NewLeader;
 export declare function mapStandingToDb(apiStanding: ApiStanding, teamId: number): NewStanding;
+/**
+ * Map API season average to DB season average shape
+ * Note: playerId will be resolved via player api_id lookup
+ * API response has nested structure: player.id and stats object
+ */
+export declare function mapSeasonAverageToDb(apiSeasonAverage: ApiSeasonAverage, playerId: number): NewSeasonAverage;
 //# sourceMappingURL=maps.d.ts.map

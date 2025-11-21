@@ -111,6 +111,37 @@ export const leaders = pgTable('leaders', {
 }));
 
 /**
+ * Season Averages table
+ * Stores player season averages including shooting percentages
+ */
+export const seasonAverages = pgTable('season_averages', {
+  id: serial('id').primaryKey(),
+  playerId: integer('player_id').references(() => players.id).notNull(),
+  season: integer('season').notNull(),
+  gamesPlayed: integer('games_played'),
+  minutes: real('minutes'),
+  points: real('points'),
+  assists: real('assists'),
+  rebounds: real('rebounds'),
+  steals: real('steals'),
+  blocks: real('blocks'),
+  turnovers: real('turnovers'),
+  fgm: real('fgm'),
+  fga: real('fga'),
+  fgPct: real('fg_pct'), // Field goal percentage
+  tpm: real('tpm'),
+  tpa: real('tpa'),
+  threePct: real('three_pct'), // Three point percentage
+  ftm: real('ftm'),
+  fta: real('fta'),
+  ftPct: real('ft_pct'), // Free throw percentage
+}, (table) => ({
+  playerSeasonUnique: unique('season_averages_player_season_unique').on(table.playerId, table.season),
+  playerIdIdx: index('season_averages_player_id_idx').on(table.playerId),
+  seasonIdx: index('season_averages_season_idx').on(table.season),
+}));
+
+/**
  * Standings table
  * Stores NBA team standings for each season
  */
@@ -151,6 +182,7 @@ export const playersRelations = relations(players, ({ one, many }) => ({
   }),
   boxScores: many(boxScores),
   leaders: many(leaders),
+  seasonAverages: many(seasonAverages),
 }));
 
 export const gamesRelations = relations(games, ({ one, many }) => ({
@@ -196,6 +228,13 @@ export const standingsRelations = relations(standings, ({ one }) => ({
   }),
 }));
 
+export const seasonAveragesRelations = relations(seasonAverages, ({ one }) => ({
+  player: one(players, {
+    fields: [seasonAverages.playerId],
+    references: [players.id],
+  }),
+}));
+
 // ============================================================================
 // Type Exports
 // ============================================================================
@@ -217,3 +256,6 @@ export type NewLeader = typeof leaders.$inferInsert;
 
 export type Standing = typeof standings.$inferSelect;
 export type NewStanding = typeof standings.$inferInsert;
+
+export type SeasonAverage = typeof seasonAverages.$inferSelect;
+export type NewSeasonAverage = typeof seasonAverages.$inferInsert;

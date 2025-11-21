@@ -1,5 +1,6 @@
-import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding } from './providers/balldontlie.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding } from '../db/schema.js';
+import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding, ApiSeasonAverage } from './providers/balldontlie.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage } from '../db/schema.js';
+import { parseMinutes } from './providers/balldontlie.js';
 
 /**
  * Map API team to DB team shape
@@ -134,5 +135,36 @@ export function mapStandingToDb(apiStanding: ApiStanding, teamId: number): NewSt
     divisionRecord: apiStanding.division_record ?? null,
     homeRecord: apiStanding.home_record ?? null,
     roadRecord: apiStanding.road_record ?? null,
+  };
+}
+
+/**
+ * Map API season average to DB season average shape
+ * Note: playerId will be resolved via player api_id lookup
+ * API response has nested structure: player.id and stats object
+ */
+export function mapSeasonAverageToDb(apiSeasonAverage: ApiSeasonAverage, playerId: number): NewSeasonAverage {
+  const stats = apiSeasonAverage.stats || {};
+  
+  return {
+    playerId,
+    season: apiSeasonAverage.season,
+    gamesPlayed: stats.gp ?? null,
+    minutes: stats.min ?? null, // Already a number, not a string
+    points: stats.pts ?? null,
+    assists: stats.ast ?? null,
+    rebounds: stats.reb ?? null,
+    steals: stats.stl ?? null,
+    blocks: stats.blk ?? null,
+    turnovers: stats.tov ?? null,
+    fgm: stats.fgm ?? null,
+    fga: stats.fga ?? null,
+    fgPct: stats.fg_pct ?? null,
+    tpm: stats.fg3m ?? null,
+    tpa: stats.fg3a ?? null,
+    threePct: stats.fg3_pct ?? null,
+    ftm: stats.ftm ?? null,
+    fta: stats.fta ?? null,
+    ftPct: stats.ft_pct ?? null,
   };
 }

@@ -146,6 +146,45 @@ const StandingSchema = z.object({
   season: z.number(),
 });
 
+// Schema that allows undefined player_id (API sometimes returns entries without it)
+const SeasonAverageSchema = z.object({
+  season: z.number(),
+  player: z.object({
+    id: z.number(),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    position: z.string().nullable().optional(),
+    height: z.string().nullable().optional(),
+    weight: z.string().nullable().optional(),
+    jersey_number: z.string().nullable().optional(),
+    college: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
+    draft_year: z.number().nullable().optional(),
+    draft_round: z.number().nullable().optional(),
+    draft_number: z.number().nullable().optional(),
+  }),
+  season_type: z.string().optional(),
+  stats: z.object({
+    gp: z.number().nullable().optional(),
+    min: z.number().nullable().optional(),
+    pts: z.number().nullable().optional(),
+    ast: z.number().nullable().optional(),
+    reb: z.number().nullable().optional(),
+    stl: z.number().nullable().optional(),
+    blk: z.number().nullable().optional(),
+    tov: z.number().nullable().optional(),
+    fgm: z.number().nullable().optional(),
+    fga: z.number().nullable().optional(),
+    fg_pct: z.number().nullable().optional(),
+    fg3m: z.number().nullable().optional(),
+    fg3a: z.number().nullable().optional(),
+    fg3_pct: z.number().nullable().optional(),
+    ftm: z.number().nullable().optional(),
+    fta: z.number().nullable().optional(),
+    ft_pct: z.number().nullable().optional(),
+  }),
+}).passthrough(); // Allow extra fields we don't know about
+
 const PaginatedResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
     data: z.array(dataSchema),
@@ -163,6 +202,7 @@ export type ApiGame = z.infer<typeof GameSchema>;
 export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
 export type ApiLeader = z.infer<typeof LeaderSchema>;
 export type ApiStanding = z.infer<typeof StandingSchema>;
+export type ApiSeasonAverage = z.infer<typeof SeasonAverageSchema>;
 
 // ============================================================================
 // Helper Functions
@@ -196,8 +236,8 @@ async function fetchFromAPI<T>(
   // Add query parameters
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
-      if ((key === 'team_ids' || key === 'dates' || key === 'game_ids') && Array.isArray(value)) {
-        // Special handling for array parameters: ?team_ids[]=1&team_ids[]=2 or ?dates[]=2024-01-01 or ?game_ids[]=123
+      if ((key === 'team_ids' || key === 'dates' || key === 'game_ids' || key === 'player_ids') && Array.isArray(value)) {
+        // Special handling for array parameters: ?team_ids[]=1&team_ids[]=2 or ?dates[]=2024-01-01 or ?game_ids[]=123 or ?player_ids[]=1
         value.forEach(item => url.searchParams.append(`${key}[]`, item.toString()));
       } else {
         url.searchParams.append(key, value.toString());
@@ -359,6 +399,90 @@ export async function fetchStandings(season: number): Promise<ApiStanding[]> {
   );
 
   return response.data;
+}
+
+/**
+ * Fetch season averages for general/base stats including shooting percentages
+ * Category: general, Type: base
+ * Can filter by player_ids array for efficiency
+ * Batches player_ids into chunks of 100 to avoid URL length limits
+ */
+export async function fetchSeasonAverages(
+  season: number,
+  seasonType: string = 'regular',
+  playerIds?: number[]
+): Promise<ApiSeasonAverage[]> {
+  console.log(`📊 Fetching season averages (general/base) for season ${season}...`);
+  
+  const params: Record<string, any> = {
+    season,
+    season_type: seasonType,
+    type: 'base',
+  };
+
+  // If no player IDs provided, fetch all (not recommended)
+  if (!playerIds || playerIds.length === 0) {
+    console.log(`  ⚠️  No player IDs provided, fetching all season averages`);
+    const response = await fetchFromAPI(
+      '/season_averages/general',
+      z.object({ data: z.array(SeasonAverageSchema) }),
+      params
+    );
+    return response.data.filter(avg => avg.player?.id !== undefined && avg.player?.id !== null);
+  }
+
+  // Batch player IDs into chunks of 100 to avoid URL length limits
+  const BATCH_SIZE = 100;
+  const batches: number[][] = [];
+  for (let i = 0; i < playerIds.length; i += BATCH_SIZE) {
+    batches.push(playerIds.slice(i, i + BATCH_SIZE));
+  }
+
+  console.log(`  👥 Filtering by ${playerIds.length} player IDs (${batches.length} batches)`);
+
+  const allResults: ApiSeasonAverage[] = [];
+
+  // Fetch each batch
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i]!; // Safe because we're iterating over batches we created
+    console.log(`  📦 Batch ${i + 1}/${batches.length}: ${batch.length} players`);
+
+    const batchParams = {
+      ...params,
+      player_ids: batch,
+    };
+
+    const response = await fetchFromAPI(
+      '/season_averages/general',
+      z.object({ data: z.array(SeasonAverageSchema) }),
+      batchParams
+    );
+
+    console.log('response.data', response.data);
+
+    // Filter to only include entries with player.id and season (required for our use case)
+    const validResults = response.data.filter(
+      avg => 
+        avg.player?.id !== undefined && 
+        avg.player?.id !== null && 
+        avg.season !== undefined && 
+        avg.season !== null
+    );
+    
+    if (validResults.length < response.data.length) {
+      console.log(`    ⚠️  Filtered out ${response.data.length - validResults.length} entries missing player.id or season`);
+    }
+    
+    allResults.push(...validResults);
+
+    // Throttle between batches to respect rate limits
+    if (i < batches.length - 1) {
+      await throttle();
+    }
+  }
+
+  console.log(`  ✅ Fetched ${allResults.length} valid season averages from ${batches.length} batches`);
+  return allResults;
 }
 
 // ============================================================================

@@ -1,1 +1,1 @@
-{"version":3,"file":"nightly.d.ts","sourceRoot":"","sources":["../../../src/etl/jobs/nightly.ts"],"names":[],"mappings":"AA2EA;;GAEG;AACH,wBAAsB,aAAa,CAAC,OAAO,GAAE;IAAE,MAAM,CAAC,EAAE,MAAM,CAAA;CAAO,iBAyOpE"}
+{"version":3,"file":"nightly.d.ts","sourceRoot":"","sources":["../../../src/etl/jobs/nightly.ts"],"names":[],"mappings":"AA8EA;;GAEG;AACH,wBAAsB,aAAa,CAAC,OAAO,GAAE;IAAE,MAAM,CAAC,EAAE,MAAM,CAAA;CAAO,iBAkQpE"}

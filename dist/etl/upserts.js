@@ -1,5 +1,5 @@
 import { db } from '../db/client.js';
-import { teams, players, games, boxScores, leaders, standings } from '../db/schema.js';
+import { teams, players, games, boxScores, leaders, standings, seasonAverages } from '../db/schema.js';
 import { eq, sql, inArray, and } from 'drizzle-orm';
 /**
  * Upsert a team by api_id
@@ -136,6 +136,21 @@ export async function upsertStanding(row) {
             .insert(standings)
             .values(row)
             .returning({ id: standings.id });
+        return result[0].id;
+    });
+}
+/**
+ * Upsert season averages by (player_id, season)
+ */
+export async function upsertSeasonAverage(row) {
+    return await db.transaction(async (tx) => {
+        await tx
+            .delete(seasonAverages)
+            .where(and(eq(seasonAverages.playerId, row.playerId), eq(seasonAverages.season, row.season)));
+        const result = await tx
+            .insert(seasonAverages)
+            .values(row)
+            .returning({ id: seasonAverages.id });
         return result[0].id;
     });
 }

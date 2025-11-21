@@ -134,12 +134,50 @@ declare const StandingSchema: z.ZodObject<{
     road_record: z.ZodNullable<z.ZodString>;
     season: z.ZodNumber;
 }, z.core.$strip>;
+declare const SeasonAverageSchema: z.ZodObject<{
+    season: z.ZodNumber;
+    player: z.ZodObject<{
+        id: z.ZodNumber;
+        first_name: z.ZodOptional<z.ZodString>;
+        last_name: z.ZodOptional<z.ZodString>;
+        position: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        height: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        weight: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        jersey_number: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        college: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        country: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        draft_year: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        draft_round: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        draft_number: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    }, z.core.$strip>;
+    season_type: z.ZodOptional<z.ZodString>;
+    stats: z.ZodObject<{
+        gp: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        min: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        pts: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ast: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        reb: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        stl: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        blk: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        tov: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fgm: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fga: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3m: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3a: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ftm: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fta: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ft_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    }, z.core.$strip>;
+}, z.core.$loose>;
 export type ApiTeam = z.infer<typeof TeamSchema>;
 export type ApiPlayer = z.infer<typeof PlayerSchema>;
 export type ApiGame = z.infer<typeof GameSchema>;
 export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
 export type ApiLeader = z.infer<typeof LeaderSchema>;
 export type ApiStanding = z.infer<typeof StandingSchema>;
+export type ApiSeasonAverage = z.infer<typeof SeasonAverageSchema>;
 /**
  * Fetch all NBA teams
  */
@@ -168,6 +206,13 @@ export declare function fetchLeaders(season: number, statType: string): Promise<
  * Fetch standings for a specific season
  */
 export declare function fetchStandings(season: number): Promise<ApiStanding[]>;
+/**
+ * Fetch season averages for general/base stats including shooting percentages
+ * Category: general, Type: base
+ * Can filter by player_ids array for efficiency
+ * Batches player_ids into chunks of 100 to avoid URL length limits
+ */
+export declare function fetchSeasonAverages(season: number, seasonType?: string, playerIds?: number[]): Promise<ApiSeasonAverage[]>;
 /**
  * Parse minutes string to decimal number (e.g., "25:30" -> 25.5)
  */

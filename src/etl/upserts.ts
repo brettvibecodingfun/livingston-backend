@@ -1,6 +1,6 @@
 import { db } from '../db/client.js';
-import { teams, players, games, boxScores, leaders, standings } from '../db/schema.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding } from '../db/schema.js';
+import { teams, players, games, boxScores, leaders, standings, seasonAverages } from '../db/schema.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage } from '../db/schema.js';
 import { eq, sql, inArray, and } from 'drizzle-orm';
 
 /**
@@ -149,6 +149,24 @@ export async function upsertStanding(row: NewStanding): Promise<number> {
       .insert(standings)
       .values(row)
       .returning({ id: standings.id });
+
+    return result[0]!.id;
+  });
+}
+
+/**
+ * Upsert season averages by (player_id, season)
+ */
+export async function upsertSeasonAverage(row: NewSeasonAverage): Promise<number> {
+  return await db.transaction(async (tx) => {
+    await tx
+      .delete(seasonAverages)
+      .where(and(eq(seasonAverages.playerId, row.playerId), eq(seasonAverages.season, row.season)));
+
+    const result = await tx
+      .insert(seasonAverages)
+      .values(row)
+      .returning({ id: seasonAverages.id });
 
     return result[0]!.id;
   });

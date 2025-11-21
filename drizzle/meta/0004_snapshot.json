@@ -1,6 +1,6 @@
 {
-  "id": "245b4a9c-5a92-4c27-b4dc-4c8ee6843181",
-  "prevId": "8b6e9c71-0cf6-4a63-9e25-3f8d3ad8d4f5",
+  "id": "8c3f1d44-c3b5-45d4-bff4-9cad6dbb5cc3",
+  "prevId": "245b4a9c-5a92-4c27-b4dc-4c8ee6843181",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -672,6 +672,193 @@
           "nullsNotDistinct": false,
           "columns": [
             "api_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.season_averages": {
+      "name": "season_averages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season": {
+          "name": "season",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "games_played": {
+          "name": "games_played",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "minutes": {
+          "name": "minutes",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "points": {
+          "name": "points",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assists": {
+          "name": "assists",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rebounds": {
+          "name": "rebounds",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "steals": {
+          "name": "steals",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "blocks": {
+          "name": "blocks",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "turnovers": {
+          "name": "turnovers",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fgm": {
+          "name": "fgm",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fga": {
+          "name": "fga",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fg_pct": {
+          "name": "fg_pct",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tpm": {
+          "name": "tpm",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tpa": {
+          "name": "tpa",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "three_pct": {
+          "name": "three_pct",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ftm": {
+          "name": "ftm",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fta": {
+          "name": "fta",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ft_pct": {
+          "name": "ft_pct",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "season_averages_player_id_idx": {
+          "name": "season_averages_player_id_idx",
+          "columns": [
+            {
+              "expression": "player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "season_averages_season_idx": {
+          "name": "season_averages_season_idx",
+          "columns": [
+            {
+              "expression": "season",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "season_averages_player_id_players_id_fk": {
+          "name": "season_averages_player_id_players_id_fk",
+          "tableFrom": "season_averages",
+          "tableTo": "players",
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "season_averages_player_season_unique": {
+          "name": "season_averages_player_season_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "player_id",
+            "season"
           ]
         }
       },
