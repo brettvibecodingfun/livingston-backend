@@ -405,7 +405,7 @@ export async function fetchStandings(season: number): Promise<ApiStanding[]> {
  * Fetch season averages for general/base stats including shooting percentages
  * Category: general, Type: base
  * Can filter by player_ids array for efficiency
- * Batches player_ids into chunks of 100 to avoid URL length limits
+ * Batches player_ids into chunks of 25 to avoid URL length limits
  */
 export async function fetchSeasonAverages(
   season: number,
@@ -431,8 +431,8 @@ export async function fetchSeasonAverages(
     return response.data.filter(avg => avg.player?.id !== undefined && avg.player?.id !== null);
   }
 
-  // Batch player IDs into chunks of 100 to avoid URL length limits
-  const BATCH_SIZE = 100;
+  // Batch player IDs into chunks of 25 to avoid URL length limits
+  const BATCH_SIZE = 25;
   const batches: number[][] = [];
   for (let i = 0; i < playerIds.length; i += BATCH_SIZE) {
     batches.push(playerIds.slice(i, i + BATCH_SIZE));
@@ -457,8 +457,6 @@ export async function fetchSeasonAverages(
       z.object({ data: z.array(SeasonAverageSchema) }),
       batchParams
     );
-
-    console.log('response.data', response.data);
 
     // Filter to only include entries with player.id and season (required for our use case)
     const validResults = response.data.filter(

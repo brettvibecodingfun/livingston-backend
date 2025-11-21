@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { db, pool } from '../../db/client.js';
+import { players } from '../../db/schema.js';
+import { eq } from 'drizzle-orm';
 import { fetchTeams, fetchPlayers, fetchGamesByDate, fetchBoxScoresByGame, fetchLeaders, fetchStandings, fetchSeasonAverages, } from '../providers/balldontlie.js';
 import { mapTeamToDb, mapPlayerToDb, mapGameToDb, mapBoxScoreToDb, mapLeaderToDb, mapStandingToDb, mapSeasonAverageToDb, } from '../maps.js';
 import { upsertTeam, upsertPlayer, upsertGame, upsertBoxScore, upsertLeader, upsertStanding, upsertSeasonAverage, buildTeamIdMap, buildPlayerIdMap, } from '../upserts.js';
@@ -96,11 +98,9 @@ export async function runNightlyJob(options = {}) {
             }
         }
         console.log(`  ✅ Upserted ${playersCount} players\n`);
-        // Build player ID map for FK resolution
+        // Build player ID map for FK resolution (initially just for players from Step 2)
         const playerApiIds = apiPlayers.map(p => p.id);
-        const playerIdMap = await buildPlayerIdMap(playerApiIds);
-        // Store player API IDs for season averages fetch
-        const playerApiIdsForAverages = [...playerApiIds];
+        let playerIdMap = await buildPlayerIdMap(playerApiIds);
         // ========================================================================
         // Step 3: Load and upsert yesterday's games
         // ========================================================================
@@ -201,9 +201,24 @@ export async function runNightlyJob(options = {}) {
         // Step 7: Load and upsert season averages (includes shooting percentages)
         // ========================================================================
         console.log('📊 Step 7: Loading season averages...');
-        // Fetch season averages filtered by the player IDs we just loaded
+        // Get ALL player API IDs from database for season averages fetch
+        // (not just the ones we fetched in Step 2, to ensure we get averages for all players)
+        console.log('  🔍 Fetching all player API IDs from database...');
+        const allPlayersInDb = await db
+            .select({ apiId: players.apiId })
+            .from(players);
+        const playerApiIdsForAverages = allPlayersInDb.map(p => p.apiId);
+        console.log(`  📊 Found ${playerApiIdsForAverages.length} total players in database`);
+        // Rebuild player ID map to include ALL players in database (not just newly fetched ones)
+        // This ensures we can match season averages for any player, including ones that weren't
+        // fetched in Step 2 (e.g., rookies or players not on current NBA teams)
+        playerIdMap = await buildPlayerIdMap(playerApiIdsForAverages);
+        // Fetch season averages filtered by ALL player IDs in database
         const apiSeasonAverages = await retryWithBackoff(() => fetchSeasonAverages(season, 'regular', playerApiIdsForAverages));
         console.log(`  📥 Fetched ${apiSeasonAverages.length} season averages for season ${season}`);
+        // Track which player IDs we requested vs which we got back
+        const requestedPlayerIds = new Set(playerApiIdsForAverages);
+        const receivedPlayerIds = new Set();
         for (const apiSeasonAverage of apiSeasonAverages) {
             // player.id and season are guaranteed by fetchSeasonAverages filter
             const playerApiId = apiSeasonAverage.player?.id;
@@ -211,6 +226,8 @@ export async function runNightlyJob(options = {}) {
                 console.warn(`  ⚠️  Season average entry missing player.id, skipping`);
                 continue;
             }
+            receivedPlayerIds.add(playerApiId);
+            // Use the full player ID map that includes all database players
             const playerId = playerIdMap.get(playerApiId);
             if (!playerId) {
                 console.warn(`  ⚠️  Missing player FK for season average player_id ${playerApiId}, skipping`);
@@ -224,6 +241,15 @@ export async function runNightlyJob(options = {}) {
             catch (error) {
                 console.warn(`  ⚠️  Error mapping season average for player_id ${playerApiId}:`, error);
                 continue;
+            }
+        }
+        // Log missing players (requested but not returned by API)
+        const missingPlayerIds = Array.from(requestedPlayerIds).filter(id => !receivedPlayerIds.has(id));
+        if (missingPlayerIds.length > 0) {
+            console.log(`  ℹ️  ${missingPlayerIds.length} players requested but no season averages returned by API`);
+            // Check if Cooper Flagg is in the missing list
+            if (missingPlayerIds.includes(1057262088)) {
+                console.log(`  🔍 Cooper Flagg (api_id: 1057262088) was requested but not returned by API`);
             }
         }
         console.log(`  ✅ Upserted ${seasonAveragesCount} season averages\n`);

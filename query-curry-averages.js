@@ -33,8 +33,8 @@ const db = drizzle(pool, { schema: { seasonAverages, players } });
 async function getCurryAverages(seasonFilter) {
   try {
     const whereConditions = [
-      eq(players.firstName, 'Stephen'),
-      eq(players.lastName, 'Curry'),
+      eq(players.firstName, 'Cooper'),
+      eq(players.lastName, 'Flagg'),
     ];
 
     if (seasonFilter) {

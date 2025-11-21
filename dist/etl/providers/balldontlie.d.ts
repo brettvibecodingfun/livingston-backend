@@ -210,7 +210,7 @@ export declare function fetchStandings(season: number): Promise<ApiStanding[]>;
  * Fetch season averages for general/base stats including shooting percentages
  * Category: general, Type: base
  * Can filter by player_ids array for efficiency
- * Batches player_ids into chunks of 100 to avoid URL length limits
+ * Batches player_ids into chunks of 25 to avoid URL length limits
  */
 export declare function fetchSeasonAverages(season: number, seasonType?: string, playerIds?: number[]): Promise<ApiSeasonAverage[]>;
 /**
