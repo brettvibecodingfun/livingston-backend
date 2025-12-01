@@ -306,6 +306,23 @@ export declare const players: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        country: import("drizzle-orm/pg-core").PgColumn<{
+            name: "country";
+            tableName: "players";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         draftYear: import("drizzle-orm/pg-core").PgColumn<{
             name: "draft_year";
             tableName: "players";

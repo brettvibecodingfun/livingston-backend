@@ -21,6 +21,7 @@ export declare function getTeamWithPlayers(teamId: number): Promise<{
         height: string | null;
         weight: string | null;
         college: string | null;
+        country: string | null;
         draftYear: number | null;
         birthdate: string | null;
     }[];
@@ -36,6 +37,7 @@ export declare function getPlayerWithStats(playerId: number): Promise<{
     height: string | null;
     weight: string | null;
     college: string | null;
+    country: string | null;
     draftYear: number | null;
     birthdate: string | null;
     boxScores: {
@@ -160,6 +162,7 @@ export declare function getGameWithAllStats(gameId: number): Promise<{
             height: string | null;
             weight: string | null;
             college: string | null;
+            country: string | null;
             draftYear: number | null;
             birthdate: string | null;
         };
@@ -259,6 +262,7 @@ export declare function getPlayerSeasonStats(playerId: number, season: number): 
         height: string | null;
         weight: string | null;
         college: string | null;
+        country: string | null;
         draftYear: number | null;
         birthdate: string | null;
     };
@@ -284,6 +288,7 @@ export declare function getTopScorersInGame(gameId: number, limit?: number): Pro
         height: string | null;
         weight: string | null;
         college: string | null;
+        country: string | null;
         draftYear: number | null;
         birthdate: string | null;
     };
@@ -318,6 +323,7 @@ export declare function getPlayersByPosition(position: string): Promise<{
     height: string | null;
     weight: string | null;
     college: string | null;
+    country: string | null;
     draftYear: number | null;
     birthdate: string | null;
     team: {

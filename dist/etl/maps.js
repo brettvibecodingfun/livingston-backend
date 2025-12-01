@@ -27,6 +27,7 @@ export function mapPlayerToDb(apiPlayer, teamId) {
         height: apiPlayer.height,
         weight: apiPlayer.weight,
         college: apiPlayer.college ?? null,
+        country: apiPlayer.country ?? null,
         draftYear: apiPlayer.draft_year ?? null,
         birthdate: undefined, // API doesn't provide birthdate
     };

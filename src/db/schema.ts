@@ -32,6 +32,7 @@ export const players = pgTable('players', {
   height: text('height'),
   weight: text('weight'),
   college: text('college'),
+  country: text('country'),
   draftYear: integer('draft_year'),
   birthdate: date('birthdate'),
 }, (table) => ({
