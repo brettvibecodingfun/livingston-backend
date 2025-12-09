@@ -7,6 +7,7 @@ export declare function mapTeamToDb(apiTeam: ApiTeam): NewTeam;
 /**
  * Map API player to DB player shape
  * Note: teamId will be resolved separately via team api_id lookup
+ * Age is calculated from birthdate constants
  */
 export declare function mapPlayerToDb(apiPlayer: ApiPlayer, teamId: number | null): NewPlayer;
 /**

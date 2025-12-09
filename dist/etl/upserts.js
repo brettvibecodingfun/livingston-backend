@@ -46,6 +46,7 @@ export async function upsertPlayer(row) {
             country: sql `EXCLUDED.country`,
             draftYear: sql `EXCLUDED.draft_year`,
             birthdate: sql `EXCLUDED.birthdate`,
+            age: sql `EXCLUDED.age`,
         },
     })
         .returning({ id: players.id });
