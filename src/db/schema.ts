@@ -35,6 +35,7 @@ export const players = pgTable('players', {
   country: text('country'),
   draftYear: integer('draft_year'),
   birthdate: date('birthdate'),
+  age: integer('age'),
 }, (table) => ({
   apiIdIdx: index('players_api_id_idx').on(table.apiId),
   teamIdIdx: index('players_team_id_idx').on(table.teamId),

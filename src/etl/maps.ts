@@ -1,6 +1,7 @@
 import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding, ApiSeasonAverage } from './providers/balldontlie.js';
 import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage } from '../db/schema.js';
 import { parseMinutes } from './providers/balldontlie.js';
+import { getPlayerBirthdate, calculateAge } from './constants/player-birthdates.js';
 
 /**
  * Map API team to DB team shape
@@ -19,8 +20,16 @@ export function mapTeamToDb(apiTeam: ApiTeam): NewTeam {
 /**
  * Map API player to DB player shape
  * Note: teamId will be resolved separately via team api_id lookup
+ * Age is calculated from birthdate constants
  */
 export function mapPlayerToDb(apiPlayer: ApiPlayer, teamId: number | null): NewPlayer {
+  // Get birthdate from constants
+  const birthdateRaw = getPlayerBirthdate(apiPlayer.id);
+  // Extract just the date part (YYYY-MM-DD) if it includes timestamp
+  const birthdate = birthdateRaw ? (birthdateRaw.split('T')[0] || birthdateRaw.split(' ')[0] || birthdateRaw) : null;
+  // Calculate age from birthdate
+  const age = calculateAge(birthdateRaw);
+  
   return {
     apiId: apiPlayer.id,
     fullName: `${apiPlayer.first_name} ${apiPlayer.last_name}`,
@@ -33,7 +42,8 @@ export function mapPlayerToDb(apiPlayer: ApiPlayer, teamId: number | null): NewP
     college: apiPlayer.college ?? null,
     country: apiPlayer.country ?? null,
     draftYear: apiPlayer.draft_year ?? null,
-    birthdate: undefined, // API doesn't provide birthdate
+    birthdate: birthdate,
+    age: age,
   };
 }
 
