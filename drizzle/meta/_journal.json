@@ -57,6 +57,13 @@
       "when": 1766447819107,
       "tag": "0007_silly_ravenous",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1766526126817,
+      "tag": "0008_common_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

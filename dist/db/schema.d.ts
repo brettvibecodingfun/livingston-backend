@@ -1504,6 +1504,68 @@ export declare const standings: import("drizzle-orm/pg-core").PgTableWithColumns
     dialect: "pg";
 }>;
 /**
+ * Bogle Games table
+ * Stores daily Bogle game information
+ */
+export declare const bogleGames: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "bogle_games";
+    schema: undefined;
+    columns: {
+        gameId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "game_id";
+            tableName: "bogle_games";
+            dataType: "number";
+            columnType: "PgSerial";
+            data: number;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        gameDate: import("drizzle-orm/pg-core").PgColumn<{
+            name: "game_date";
+            tableName: "bogle_games";
+            dataType: "string";
+            columnType: "PgDateString";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        gameQuestion: import("drizzle-orm/pg-core").PgColumn<{
+            name: "game_question";
+            tableName: "bogle_games";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
+/**
  * Bogle Scores table
  * Stores user scores for the daily Bogle game
  */
@@ -1521,6 +1583,23 @@ export declare const bogleScores: import("drizzle-orm/pg-core").PgTableWithColum
             notNull: true;
             hasDefault: true;
             isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        gameId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "game_id";
+            tableName: "bogle_scores";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
             enumValues: undefined;
@@ -1665,6 +1744,12 @@ export declare const standingsRelations: import("drizzle-orm").Relations<"standi
 export declare const seasonAveragesRelations: import("drizzle-orm").Relations<"season_averages", {
     player: import("drizzle-orm").One<"players", true>;
 }>;
+export declare const bogleGamesRelations: import("drizzle-orm").Relations<"bogle_games", {
+    scores: import("drizzle-orm").Many<"bogle_scores">;
+}>;
+export declare const bogleScoresRelations: import("drizzle-orm").Relations<"bogle_scores", {
+    game: import("drizzle-orm").One<"bogle_games", true>;
+}>;
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
 export type Player = typeof players.$inferSelect;
@@ -1679,6 +1764,8 @@ export type Standing = typeof standings.$inferSelect;
 export type NewStanding = typeof standings.$inferInsert;
 export type SeasonAverage = typeof seasonAverages.$inferSelect;
 export type NewSeasonAverage = typeof seasonAverages.$inferInsert;
+export type BogleGame = typeof bogleGames.$inferSelect;
+export type NewBogleGame = typeof bogleGames.$inferInsert;
 export type BogleScore = typeof bogleScores.$inferSelect;
 export type NewBogleScore = typeof bogleScores.$inferInsert;
 //# sourceMappingURL=schema.d.ts.map

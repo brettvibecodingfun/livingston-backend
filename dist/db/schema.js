@@ -158,11 +158,23 @@ export const standings = pgTable('standings', {
     seasonIdx: index('standings_season_idx').on(table.season),
 }));
 /**
+ * Bogle Games table
+ * Stores daily Bogle game information
+ */
+export const bogleGames = pgTable('bogle_games', {
+    gameId: serial('game_id').primaryKey(),
+    gameDate: date('game_date').notNull().unique(),
+    gameQuestion: text('game_question').notNull(),
+}, (table) => ({
+    gameDateIdx: index('bogle_games_game_date_idx').on(table.gameDate),
+}));
+/**
  * Bogle Scores table
  * Stores user scores for the daily Bogle game
  */
 export const bogleScores = pgTable('bogle_scores', {
     id: serial('id').primaryKey(),
+    gameId: integer('game_id').references(() => bogleGames.gameId).notNull(),
     username: text('username').notNull(),
     gameScore: integer('game_score').notNull(),
     gameDate: date('game_date').notNull(),
@@ -170,7 +182,8 @@ export const bogleScores = pgTable('bogle_scores', {
     timeTaken: integer('time_taken'), // Time in seconds (optional)
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
-    usernameDateQuestionUnique: unique('bogle_scores_username_date_question_unique').on(table.username, table.gameDate, table.gameQuestion),
+    usernameGameIdUnique: unique('bogle_scores_username_game_id_unique').on(table.username, table.gameId),
+    gameIdIdx: index('bogle_scores_game_id_idx').on(table.gameId),
     gameDateIdx: index('bogle_scores_game_date_idx').on(table.gameDate),
     usernameIdx: index('bogle_scores_username_idx').on(table.username),
     gameQuestionIdx: index('bogle_scores_game_question_idx').on(table.gameQuestion),
@@ -238,6 +251,15 @@ export const seasonAveragesRelations = relations(seasonAverages, ({ one }) => ({
     player: one(players, {
         fields: [seasonAverages.playerId],
         references: [players.id],
+    }),
+}));
+export const bogleGamesRelations = relations(bogleGames, ({ many }) => ({
+    scores: many(bogleScores),
+}));
+export const bogleScoresRelations = relations(bogleScores, ({ one }) => ({
+    game: one(bogleGames, {
+        fields: [bogleScores.gameId],
+        references: [bogleGames.gameId],
     }),
 }));
 //# sourceMappingURL=schema.js.map

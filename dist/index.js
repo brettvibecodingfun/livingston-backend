@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import dotenv from 'dotenv';
 import { db, pool } from './db/client.js';
-import { bogleScores } from './db/schema.js';
+import { bogleScores, bogleGames } from './db/schema.js';
 import { eq, desc, asc } from 'drizzle-orm';
 // Load environment variables
 dotenv.config();
@@ -32,7 +32,7 @@ async function parseJsonBody(req) {
 const server = createServer(async (req, res) => {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     // Handle preflight
     if (req.method === 'OPTIONS') {
@@ -79,6 +79,239 @@ const server = createServer(async (req, res) => {
         res.end('pong');
         return;
     }
+    // POST /api/bogle/games - Create a new game
+    if (req.url === '/api/bogle/games' && req.method === 'POST') {
+        try {
+            const body = await parseJsonBody(req);
+            // Validate required fields
+            if (!body.gameDate || typeof body.gameDate !== 'string') {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Bad Request',
+                    message: 'gameDate is required and must be a string (YYYY-MM-DD)',
+                }, null, 2));
+                return;
+            }
+            // Validate date format
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(body.gameDate)) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Bad Request',
+                    message: 'gameDate must be in YYYY-MM-DD format',
+                }, null, 2));
+                return;
+            }
+            if (!body.gameQuestion || typeof body.gameQuestion !== 'string') {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Bad Request',
+                    message: 'gameQuestion is required and must be a string',
+                }, null, 2));
+                return;
+            }
+            // Create new game record
+            const newGame = {
+                gameDate: body.gameDate,
+                gameQuestion: body.gameQuestion,
+            };
+            // Insert into database
+            const [insertedGame] = await db.insert(bogleGames).values(newGame).returning();
+            res.writeHead(201, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: true,
+                data: insertedGame,
+            }, null, 2));
+        }
+        catch (error) {
+            // Handle unique constraint violation (duplicate date)
+            if (error.code === '23505' || error.message?.includes('unique')) {
+                res.writeHead(409, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Conflict',
+                    message: 'A game for this date already exists',
+                }, null, 2));
+                return;
+            }
+            console.error('Error inserting Bogle game:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                error: 'Internal Server Error',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            }, null, 2));
+        }
+        return;
+    }
+    // GET /api/bogle/games?date=YYYY-MM-DD - Get game by date
+    if (req.url?.startsWith('/api/bogle/games') && req.method === 'GET') {
+        try {
+            const url = new URL(req.url, `http://${req.headers.host}`);
+            const dateParam = url.searchParams.get('date');
+            // If date parameter is provided, get game by date
+            if (dateParam) {
+                // Validate date format
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        error: 'Bad Request',
+                        message: 'date must be in YYYY-MM-DD format',
+                    }, null, 2));
+                    return;
+                }
+                // Query game for the specified date
+                const [game] = await db
+                    .select()
+                    .from(bogleGames)
+                    .where(eq(bogleGames.gameDate, dateParam))
+                    .limit(1);
+                if (!game) {
+                    res.writeHead(404, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        error: 'Not Found',
+                        message: `No game found for date ${dateParam}`,
+                    }, null, 2));
+                    return;
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    success: true,
+                    date: dateParam,
+                    data: game,
+                }, null, 2));
+                return;
+            }
+            // If no date parameter, get all games
+            const games = await db
+                .select()
+                .from(bogleGames)
+                .orderBy(desc(bogleGames.gameDate));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: true,
+                count: games.length,
+                data: games,
+            }, null, 2));
+        }
+        catch (error) {
+            console.error('Error fetching Bogle games:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                error: 'Internal Server Error',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            }, null, 2));
+        }
+        return;
+    }
+    // PATCH /api/bogle/games/:gameId - Update a game
+    if (req.url?.startsWith('/api/bogle/games/') && req.method === 'PATCH') {
+        try {
+            // Extract gameId from URL
+            const urlParts = req.url.split('/');
+            const gameIdParam = urlParts[urlParts.length - 1];
+            if (!gameIdParam) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Bad Request',
+                    message: 'gameId is required in URL path',
+                }, null, 2));
+                return;
+            }
+            const gameId = parseInt(gameIdParam, 10);
+            if (isNaN(gameId) || gameId <= 0) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Bad Request',
+                    message: 'Invalid gameId in URL path',
+                }, null, 2));
+                return;
+            }
+            // Check if game exists
+            const [existingGame] = await db
+                .select()
+                .from(bogleGames)
+                .where(eq(bogleGames.gameId, gameId))
+                .limit(1);
+            if (!existingGame) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Not Found',
+                    message: `Game with gameId ${gameId} does not exist`,
+                }, null, 2));
+                return;
+            }
+            const body = await parseJsonBody(req);
+            // Build update object - only include fields that are provided
+            const updateData = {};
+            if (body.gameDate !== undefined) {
+                if (typeof body.gameDate !== 'string') {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        error: 'Bad Request',
+                        message: 'gameDate must be a string (YYYY-MM-DD)',
+                    }, null, 2));
+                    return;
+                }
+                // Validate date format
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(body.gameDate)) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        error: 'Bad Request',
+                        message: 'gameDate must be in YYYY-MM-DD format',
+                    }, null, 2));
+                    return;
+                }
+                updateData.gameDate = body.gameDate;
+            }
+            if (body.gameQuestion !== undefined) {
+                if (typeof body.gameQuestion !== 'string') {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        error: 'Bad Request',
+                        message: 'gameQuestion must be a string',
+                    }, null, 2));
+                    return;
+                }
+                updateData.gameQuestion = body.gameQuestion;
+            }
+            // Check if at least one field is being updated
+            if (Object.keys(updateData).length === 0) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Bad Request',
+                    message: 'At least one field (gameDate or gameQuestion) must be provided for update',
+                }, null, 2));
+                return;
+            }
+            // Update the game
+            const [updatedGame] = await db
+                .update(bogleGames)
+                .set(updateData)
+                .where(eq(bogleGames.gameId, gameId))
+                .returning();
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: true,
+                data: updatedGame,
+            }, null, 2));
+        }
+        catch (error) {
+            // Handle unique constraint violation (duplicate date)
+            if (error.code === '23505' || error.message?.includes('unique')) {
+                res.writeHead(409, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Conflict',
+                    message: 'A game for this date already exists',
+                }, null, 2));
+                return;
+            }
+            console.error('Error updating Bogle game:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                error: 'Internal Server Error',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            }, null, 2));
+        }
+        return;
+    }
     // POST /api/bogle/scores - Submit a new score
     if (req.url === '/api/bogle/scores' && req.method === 'POST') {
         try {
@@ -100,19 +333,25 @@ const server = createServer(async (req, res) => {
                 }, null, 2));
                 return;
             }
-            if (!body.gameDate || typeof body.gameDate !== 'string') {
+            if (!body.gameId || typeof body.gameId !== 'number') {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     error: 'Bad Request',
-                    message: 'gameDate is required and must be a string (YYYY-MM-DD)',
+                    message: 'gameId is required and must be a number',
                 }, null, 2));
                 return;
             }
-            if (!body.gameQuestion || typeof body.gameQuestion !== 'string') {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
+            // Validate that the game exists
+            const [game] = await db
+                .select()
+                .from(bogleGames)
+                .where(eq(bogleGames.gameId, body.gameId))
+                .limit(1);
+            if (!game) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
-                    error: 'Bad Request',
-                    message: 'gameQuestion is required and must be a string',
+                    error: 'Not Found',
+                    message: `Game with gameId ${body.gameId} does not exist`,
                 }, null, 2));
                 return;
             }
@@ -127,10 +366,11 @@ const server = createServer(async (req, res) => {
             }
             // Create new score record
             const newScore = {
+                gameId: Math.round(body.gameId),
                 username: body.username,
                 gameScore: Math.round(body.gameScore),
-                gameDate: body.gameDate,
-                gameQuestion: body.gameQuestion,
+                gameDate: game.gameDate,
+                gameQuestion: game.gameQuestion,
                 timeTaken: body.timeTaken !== undefined ? Math.round(body.timeTaken) : null,
             };
             // Insert into database
@@ -147,7 +387,7 @@ const server = createServer(async (req, res) => {
                 res.writeHead(409, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     error: 'Conflict',
-                    message: 'A score for this username, date, and question already exists',
+                    message: 'A score for this username and game already exists',
                 }, null, 2));
                 return;
             }
@@ -210,7 +450,7 @@ const server = createServer(async (req, res) => {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
         error: 'Not Found',
-        message: 'Available endpoints: /health, /ping, POST /api/bogle/scores, GET /api/bogle/scores?date=YYYY-MM-DD',
+        message: 'Available endpoints: /health, /ping, POST /api/bogle/games, PATCH /api/bogle/games/:gameId, GET /api/bogle/games, GET /api/bogle/games?date=YYYY-MM-DD, POST /api/bogle/scores, GET /api/bogle/scores?date=YYYY-MM-DD',
     }, null, 2));
 });
 // Graceful shutdown
@@ -238,6 +478,10 @@ server.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`📡 Health check: http://localhost:${PORT}/health`);
     console.log(`🏓 Ping: http://localhost:${PORT}/ping`);
+    console.log(`🎮 POST /api/bogle/games - Create a new game`);
+    console.log(`✏️  PATCH /api/bogle/games/:gameId - Update a game`);
+    console.log(`📋 GET /api/bogle/games - Get all games`);
+    console.log(`📅 GET /api/bogle/games?date=YYYY-MM-DD - Get game by date`);
     console.log(`🎮 POST /api/bogle/scores - Submit a score`);
     console.log(`📊 GET /api/bogle/scores?date=YYYY-MM-DD - Get scores by date`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
