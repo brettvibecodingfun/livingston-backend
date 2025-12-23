@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, date, real, unique, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, text, date, real, unique, index, uniqueIndex, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 /**
@@ -165,6 +165,26 @@ export const standings = pgTable('standings', {
   seasonIdx: index('standings_season_idx').on(table.season),
 }));
 
+/**
+ * Bogle Scores table
+ * Stores user scores for the daily Bogle game
+ */
+export const bogleScores = pgTable('bogle_scores', {
+  id: serial('id').primaryKey(),
+  username: text('username').notNull(),
+  gameScore: integer('game_score').notNull(),
+  gameDate: date('game_date').notNull(),
+  gameQuestion: text('game_question').notNull(),
+  timeTaken: integer('time_taken'), // Time in seconds (optional)
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  usernameDateQuestionUnique: unique('bogle_scores_username_date_question_unique').on(table.username, table.gameDate, table.gameQuestion),
+  gameDateIdx: index('bogle_scores_game_date_idx').on(table.gameDate),
+  usernameIdx: index('bogle_scores_username_idx').on(table.username),
+  gameQuestionIdx: index('bogle_scores_game_question_idx').on(table.gameQuestion),
+  gameScoreIdx: index('bogle_scores_game_score_idx').on(table.gameScore),
+}));
+
 // ============================================================================
 // Relations (for Drizzle joins)
 // ============================================================================
@@ -261,3 +281,6 @@ export type NewStanding = typeof standings.$inferInsert;
 
 export type SeasonAverage = typeof seasonAverages.$inferSelect;
 export type NewSeasonAverage = typeof seasonAverages.$inferInsert;
+
+export type BogleScore = typeof bogleScores.$inferSelect;
+export type NewBogleScore = typeof bogleScores.$inferInsert;
