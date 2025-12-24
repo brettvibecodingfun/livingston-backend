@@ -35,7 +35,7 @@ async function parseJsonBody(req: any): Promise<any> {
 const server = createServer(async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // Handle preflight
@@ -447,6 +447,69 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // DELETE /api/bogle/scores/:id - Delete a score by ID
+  if (req.url?.startsWith('/api/bogle/scores/') && req.method === 'DELETE') {
+    try {
+      // Extract score ID from URL
+      const urlParts = req.url.split('/');
+      const scoreIdParam = urlParts[urlParts.length - 1];
+      if (!scoreIdParam) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Bad Request',
+          message: 'score ID is required in URL path',
+        }, null, 2));
+        return;
+      }
+      const scoreId = parseInt(scoreIdParam, 10);
+
+      if (isNaN(scoreId) || scoreId <= 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Bad Request',
+          message: 'Invalid score ID in URL path',
+        }, null, 2));
+        return;
+      }
+
+      // Check if score exists
+      const [existingScore] = await db
+        .select()
+        .from(bogleScores)
+        .where(eq(bogleScores.id, scoreId))
+        .limit(1);
+
+      if (!existingScore) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Not Found',
+          message: `Score with ID ${scoreId} does not exist`,
+        }, null, 2));
+        return;
+      }
+
+      // Delete the score
+      await db
+        .delete(bogleScores)
+        .where(eq(bogleScores.id, scoreId));
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: `Score with ID ${scoreId} has been deleted`,
+        deletedScore: existingScore,
+      }, null, 2));
+    } catch (error) {
+      console.error('Error deleting Bogle score:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }, null, 2));
+    }
+    return;
+  }
+
   // GET /api/bogle/scores?date=YYYY-MM-DD - Get all scores for a specific date
   if (req.url?.startsWith('/api/bogle/scores') && req.method === 'GET') {
     try {
@@ -501,7 +564,7 @@ const server = createServer(async (req, res) => {
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({
     error: 'Not Found',
-    message: 'Available endpoints: /health, /ping, POST /api/bogle/games, PATCH /api/bogle/games/:gameId, GET /api/bogle/games, GET /api/bogle/games?date=YYYY-MM-DD, POST /api/bogle/scores, GET /api/bogle/scores?date=YYYY-MM-DD',
+    message: 'Available endpoints: /health, /ping, POST /api/bogle/games, PATCH /api/bogle/games/:gameId, GET /api/bogle/games, GET /api/bogle/games?date=YYYY-MM-DD, POST /api/bogle/scores, DELETE /api/bogle/scores/:id, GET /api/bogle/scores?date=YYYY-MM-DD',
   }, null, 2));
 });
 
@@ -537,6 +600,7 @@ server.listen(PORT, () => {
   console.log(`📋 GET /api/bogle/games - Get all games`);
   console.log(`📅 GET /api/bogle/games?date=YYYY-MM-DD - Get game by date`);
   console.log(`🎮 POST /api/bogle/scores - Submit a score`);
+  console.log(`🗑️  DELETE /api/bogle/scores/:id - Delete a score by ID`);
   console.log(`📊 GET /api/bogle/scores?date=YYYY-MM-DD - Get scores by date`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 });
