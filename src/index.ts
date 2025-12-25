@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { db, pool } from './db/client.js';
 import { bogleScores, bogleGames, type NewBogleScore, type NewBogleGame } from './db/schema.js';
 import { eq, desc, asc } from 'drizzle-orm';
+import { swaggerSpec, getSwaggerHtml } from './swagger.js';
 
 // Load environment variables
 dotenv.config();
@@ -86,6 +87,23 @@ const server = createServer(async (req, res) => {
   if (req.url === '/ping') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('pong');
+    return;
+  }
+
+  // Swagger UI endpoint
+  if (req.url === '/api-docs' || req.url === '/swagger') {
+    // Detect protocol from headers (Render sets x-forwarded-proto)
+    const protocol = req.headers['x-forwarded-proto'] || (req.headers.host?.includes('localhost') ? 'http' : 'https');
+    const baseUrl = `${protocol}://${req.headers.host}`;
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(getSwaggerHtml(baseUrl));
+    return;
+  }
+
+  // OpenAPI JSON spec endpoint
+  if (req.url === '/api-docs.json') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(swaggerSpec, null, 2));
     return;
   }
 
@@ -595,6 +613,7 @@ server.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/health`);
   console.log(`🏓 Ping: http://localhost:${PORT}/ping`);
+  console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
   console.log(`🎮 POST /api/bogle/games - Create a new game`);
   console.log(`✏️  PATCH /api/bogle/games/:gameId - Update a game`);
   console.log(`📋 GET /api/bogle/games - Get all games`);
