@@ -6,8 +6,10 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "postinstall": "npm run build",
+    "build:verify": "node --input-type=module -e \"import('fs').then(fs=>{if(!fs.existsSync('dist/swagger.js')){console.error('ERROR: dist/swagger.js not found!');process.exit(1)}})\"",
     "start": "node dist/index.js",
-    "dev": "ts-node --project tsconfig.node.json --esm src/index.ts",
+    "dev": "ts-node --esm src/index.ts",
     "db:gen": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
