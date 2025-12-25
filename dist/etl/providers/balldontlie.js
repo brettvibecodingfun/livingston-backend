@@ -174,6 +174,32 @@ const SeasonAverageSchema = z.object({
         ft_pct: z.number().nullable().optional(),
     }),
 }).passthrough(); // Allow extra fields we don't know about
+const ContractSchema = z.object({
+    id: z.number(),
+    player_id: z.number(),
+    season: z.number(),
+    team_id: z.number(),
+    cap_hit: z.number().nullable(),
+    total_cash: z.number().nullable(),
+    base_salary: z.number().nullable(),
+    rank: z.number().nullable(),
+    player: z.object({
+        id: z.number(),
+        first_name: z.string(),
+        last_name: z.string(),
+        position: z.string().nullable(),
+        height: z.string().nullable(),
+        weight: z.string().nullable(),
+        jersey_number: z.string().nullable(),
+        college: z.string().nullable(),
+        country: z.string().nullable(),
+        draft_year: z.number().nullable(),
+        draft_round: z.number().nullable(),
+        draft_number: z.number().nullable(),
+        team_id: z.number().nullable(),
+    }),
+    team: TeamSchema,
+});
 const PaginatedResponseSchema = (dataSchema) => z.object({
     data: z.array(dataSchema),
     meta: z.object({
@@ -379,6 +405,21 @@ export async function fetchSeasonAverages(season, seasonType = 'regular', player
     }
     console.log(`  ✅ Fetched ${allResults.length} valid season averages from ${batches.length} batches`);
     return allResults;
+}
+/**
+ * Fetch team contracts for a specific team and season
+ * Endpoint: GET /contracts/teams
+ */
+export async function fetchTeamContracts(teamId, season) {
+    console.log(`💰 Fetching contracts for team ${teamId}${season ? `, season ${season}` : ''}...`);
+    const params = {
+        team_id: teamId,
+    };
+    if (season !== undefined) {
+        params.season = season;
+    }
+    const response = await fetchFromAPI('/contracts/teams', z.object({ data: z.array(ContractSchema) }), params);
+    return response.data;
 }
 // ============================================================================
 // Data Normalization Helpers

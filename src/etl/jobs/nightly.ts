@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { db, pool } from '../../db/client.js';
-import { players } from '../../db/schema.js';
+import { players, teams } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import {
   fetchTeams,
@@ -12,6 +12,7 @@ import {
   fetchLeaders,
   fetchStandings,
   fetchSeasonAverages,
+  fetchTeamContracts,
 } from '../providers/balldontlie.js';
 import {
   mapTeamToDb,
@@ -32,6 +33,7 @@ import {
   upsertSeasonAverage,
   buildTeamIdMap,
   buildPlayerIdMap,
+  updatePlayerBaseSalary,
 } from '../upserts.js';
 
 dotenv.config();
@@ -94,6 +96,7 @@ export async function runNightlyJob(options: { season?: number } = {}) {
   let leadersCount = 0;
   let standingsCount = 0;
   let seasonAveragesCount = 0;
+  let contractsCount = 0;
 
   try {
     // ========================================================================
@@ -345,6 +348,61 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     console.log(`  ✅ Upserted ${seasonAveragesCount} season averages\n`);
 
     // ========================================================================
+    // Step 8: Load and update player contracts (base salary)
+    // ========================================================================
+    console.log('💰 Step 8: Loading player contracts...');
+    
+    // Get all teams from database to fetch contracts for each
+    const allTeamsInDb = await db
+      .select({ apiId: teams.apiId, id: teams.id })
+      .from(teams);
+    console.log(`  📋 Found ${allTeamsInDb.length} teams in database`);
+    
+    // Build team API ID to DB ID map
+    const teamApiIdToDbId = new Map<number, number>();
+    for (const team of allTeamsInDb) {
+      teamApiIdToDbId.set(team.apiId, team.id);
+    }
+    
+    // Fetch contracts for each team
+    for (const team of allTeamsInDb) {
+      try {
+        console.log(`  📥 Fetching contracts for team API ID ${team.apiId}...`);
+        
+        const apiContracts = await retryWithBackoff(() =>
+          fetchTeamContracts(team.apiId, season)
+        );
+        
+        if (apiContracts.length === 0) {
+          console.log(`    ℹ️  No contracts found for team API ID ${team.apiId}`);
+          continue;
+        }
+        
+        console.log(`    📊 Found ${apiContracts.length} contracts`);
+        
+        // Update each player's base salary from their contract
+        for (const contract of apiContracts) {
+          const playerApiId = contract.player_id;
+          const baseSalary = contract.base_salary;
+          
+          // Update the player's base salary
+          await updatePlayerBaseSalary(playerApiId, baseSalary);
+          contractsCount++;
+        }
+        
+        console.log(`    ✅ Updated ${apiContracts.length} player contracts`);
+        
+        // Throttle between teams to respect rate limits (200-300ms)
+        await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 100) + 200));
+      } catch (error) {
+        console.warn(`  ⚠️  Error fetching contracts for team API ID ${team.apiId}:`, error);
+        continue;
+      }
+    }
+    
+    console.log(`  ✅ Total contracts processed: ${contractsCount}\n`);
+
+    // ========================================================================
     // Summary
     // ========================================================================
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -360,6 +418,7 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     console.log(`   • Leaders: ${leadersCount}`);
     console.log(`   • Standings: ${standingsCount}`);
     console.log(`   • Season Averages: ${seasonAveragesCount}`);
+    console.log(`   • Contracts: ${contractsCount}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   } catch (error) {

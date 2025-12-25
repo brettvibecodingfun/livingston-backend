@@ -64,6 +64,13 @@
       "when": 1766526126817,
       "tag": "0008_common_tomorrow_man",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1766691198377,
+      "tag": "0009_red_moondragon",
+      "breakpoints": true
     }
   ]
 }

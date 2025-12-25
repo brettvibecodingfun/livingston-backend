@@ -36,6 +36,7 @@ export const players = pgTable('players', {
   draftYear: integer('draft_year'),
   birthdate: date('birthdate'),
   age: integer('age'),
+  baseSalary: integer('base_salary'), // Base salary from contract data
 }, (table) => ({
   apiIdIdx: index('players_api_id_idx').on(table.apiId),
   teamIdIdx: index('players_team_id_idx').on(table.teamId),

@@ -51,11 +51,22 @@ export async function upsertPlayer(row: NewPlayer): Promise<number> {
         draftYear: sql`EXCLUDED.draft_year`,
         birthdate: sql`EXCLUDED.birthdate`,
         age: sql`EXCLUDED.age`,
+        baseSalary: sql`EXCLUDED.base_salary`,
       },
     })
     .returning({ id: players.id });
 
   return result[0]!.id;
+}
+
+/**
+ * Update player base salary from contract data
+ */
+export async function updatePlayerBaseSalary(playerApiId: number, baseSalary: number | null): Promise<void> {
+  await db
+    .update(players)
+    .set({ baseSalary: baseSalary })
+    .where(eq(players.apiId, playerApiId));
 }
 
 /**

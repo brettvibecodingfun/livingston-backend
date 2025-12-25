@@ -171,6 +171,39 @@ declare const SeasonAverageSchema: z.ZodObject<{
         ft_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
     }, z.core.$strip>;
 }, z.core.$loose>;
+declare const ContractSchema: z.ZodObject<{
+    id: z.ZodNumber;
+    player_id: z.ZodNumber;
+    season: z.ZodNumber;
+    team_id: z.ZodNumber;
+    cap_hit: z.ZodNullable<z.ZodNumber>;
+    total_cash: z.ZodNullable<z.ZodNumber>;
+    base_salary: z.ZodNullable<z.ZodNumber>;
+    rank: z.ZodNullable<z.ZodNumber>;
+    player: z.ZodObject<{
+        id: z.ZodNumber;
+        first_name: z.ZodString;
+        last_name: z.ZodString;
+        position: z.ZodNullable<z.ZodString>;
+        height: z.ZodNullable<z.ZodString>;
+        weight: z.ZodNullable<z.ZodString>;
+        jersey_number: z.ZodNullable<z.ZodString>;
+        college: z.ZodNullable<z.ZodString>;
+        country: z.ZodNullable<z.ZodString>;
+        draft_year: z.ZodNullable<z.ZodNumber>;
+        draft_round: z.ZodNullable<z.ZodNumber>;
+        draft_number: z.ZodNullable<z.ZodNumber>;
+        team_id: z.ZodNullable<z.ZodNumber>;
+    }, z.core.$strip>;
+    team: z.ZodObject<{
+        id: z.ZodNumber;
+        name: z.ZodString;
+        abbreviation: z.ZodString;
+        city: z.ZodString;
+        conference: z.ZodString;
+        division: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
 export type ApiTeam = z.infer<typeof TeamSchema>;
 export type ApiPlayer = z.infer<typeof PlayerSchema>;
 export type ApiGame = z.infer<typeof GameSchema>;
@@ -178,6 +211,7 @@ export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
 export type ApiLeader = z.infer<typeof LeaderSchema>;
 export type ApiStanding = z.infer<typeof StandingSchema>;
 export type ApiSeasonAverage = z.infer<typeof SeasonAverageSchema>;
+export type ApiContract = z.infer<typeof ContractSchema>;
 /**
  * Fetch all NBA teams
  */
@@ -213,6 +247,11 @@ export declare function fetchStandings(season: number): Promise<ApiStanding[]>;
  * Batches player_ids into chunks of 25 to avoid URL length limits
  */
 export declare function fetchSeasonAverages(season: number, seasonType?: string, playerIds?: number[]): Promise<ApiSeasonAverage[]>;
+/**
+ * Fetch team contracts for a specific team and season
+ * Endpoint: GET /contracts/teams
+ */
+export declare function fetchTeamContracts(teamId: number, season?: number): Promise<ApiContract[]>;
 /**
  * Parse minutes string to decimal number (e.g., "25:30" -> 25.5)
  */

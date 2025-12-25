@@ -185,6 +185,33 @@ const SeasonAverageSchema = z.object({
   }),
 }).passthrough(); // Allow extra fields we don't know about
 
+const ContractSchema = z.object({
+  id: z.number(),
+  player_id: z.number(),
+  season: z.number(),
+  team_id: z.number(),
+  cap_hit: z.number().nullable(),
+  total_cash: z.number().nullable(),
+  base_salary: z.number().nullable(),
+  rank: z.number().nullable(),
+  player: z.object({
+    id: z.number(),
+    first_name: z.string(),
+    last_name: z.string(),
+    position: z.string().nullable(),
+    height: z.string().nullable(),
+    weight: z.string().nullable(),
+    jersey_number: z.string().nullable(),
+    college: z.string().nullable(),
+    country: z.string().nullable(),
+    draft_year: z.number().nullable(),
+    draft_round: z.number().nullable(),
+    draft_number: z.number().nullable(),
+    team_id: z.number().nullable(),
+  }),
+  team: TeamSchema,
+});
+
 const PaginatedResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
     data: z.array(dataSchema),
@@ -203,6 +230,7 @@ export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
 export type ApiLeader = z.infer<typeof LeaderSchema>;
 export type ApiStanding = z.infer<typeof StandingSchema>;
 export type ApiSeasonAverage = z.infer<typeof SeasonAverageSchema>;
+export type ApiContract = z.infer<typeof ContractSchema>;
 
 // ============================================================================
 // Helper Functions
@@ -481,6 +509,33 @@ export async function fetchSeasonAverages(
 
   console.log(`  ✅ Fetched ${allResults.length} valid season averages from ${batches.length} batches`);
   return allResults;
+}
+
+/**
+ * Fetch team contracts for a specific team and season
+ * Endpoint: GET /contracts/teams
+ */
+export async function fetchTeamContracts(
+  teamId: number,
+  season?: number
+): Promise<ApiContract[]> {
+  console.log(`💰 Fetching contracts for team ${teamId}${season ? `, season ${season}` : ''}...`);
+
+  const params: Record<string, any> = {
+    team_id: teamId,
+  };
+
+  if (season !== undefined) {
+    params.season = season;
+  }
+
+  const response = await fetchFromAPI(
+    '/contracts/teams',
+    z.object({ data: z.array(ContractSchema) }),
+    params
+  );
+
+  return response.data;
 }
 
 // ============================================================================

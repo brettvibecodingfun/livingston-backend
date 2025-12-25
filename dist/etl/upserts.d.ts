@@ -12,6 +12,10 @@ export declare function upsertTeam(row: NewTeam): Promise<number>;
  */
 export declare function upsertPlayer(row: NewPlayer): Promise<number>;
 /**
+ * Update player base salary from contract data
+ */
+export declare function updatePlayerBaseSalary(playerApiId: number, baseSalary: number | null): Promise<void>;
+/**
  * Upsert a game by api_id
  * ON CONFLICT (api_id) DO UPDATE
  * Returns the local database id
