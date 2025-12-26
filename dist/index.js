@@ -142,10 +142,23 @@ const server = createServer(async (req, res) => {
             };
             // Insert into database
             const [insertedGame] = await db.insert(bogleGames).values(newGame).returning();
+            if (!insertedGame) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Internal Server Error',
+                    message: 'Failed to create game',
+                }, null, 2));
+                return;
+            }
+            // Ensure rankType is properly handled (can be null)
+            const gameResponse = {
+                ...insertedGame,
+                rankType: insertedGame.rankType ?? null,
+            };
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                data: insertedGame,
+                data: gameResponse,
             }, null, 2));
         }
         catch (error) {
@@ -197,11 +210,16 @@ const server = createServer(async (req, res) => {
                     }, null, 2));
                     return;
                 }
+                // Ensure rankType is properly handled (can be null)
+                const gameResponse = {
+                    ...game,
+                    rankType: game.rankType ?? null,
+                };
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     success: true,
                     date: dateParam,
-                    data: game,
+                    data: gameResponse,
                 }, null, 2));
                 return;
             }
@@ -210,11 +228,16 @@ const server = createServer(async (req, res) => {
                 .select()
                 .from(bogleGames)
                 .orderBy(desc(bogleGames.gameDate));
+            // Ensure rankType is properly handled for all games (can be null)
+            const gamesResponse = games.map(game => ({
+                ...game,
+                rankType: game.rankType ?? null,
+            }));
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                count: games.length,
-                data: games,
+                count: gamesResponse.length,
+                data: gamesResponse,
             }, null, 2));
         }
         catch (error) {
@@ -324,10 +347,23 @@ const server = createServer(async (req, res) => {
                 .set(updateData)
                 .where(eq(bogleGames.gameId, gameId))
                 .returning();
+            if (!updatedGame) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: 'Internal Server Error',
+                    message: 'Failed to update game',
+                }, null, 2));
+                return;
+            }
+            // Ensure rankType is properly handled (can be null)
+            const gameResponse = {
+                ...updatedGame,
+                rankType: updatedGame.rankType ?? null,
+            };
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                data: updatedGame,
+                data: gameResponse,
             }, null, 2));
         }
         catch (error) {

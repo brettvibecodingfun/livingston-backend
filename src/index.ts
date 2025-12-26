@@ -161,10 +161,25 @@ const server = createServer(async (req, res) => {
       // Insert into database
       const [insertedGame] = await db.insert(bogleGames).values(newGame).returning();
 
+      if (!insertedGame) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Internal Server Error',
+          message: 'Failed to create game',
+        }, null, 2));
+        return;
+      }
+
+      // Ensure rankType is properly handled (can be null)
+      const gameResponse = {
+        ...insertedGame,
+        rankType: insertedGame.rankType ?? null,
+      };
+
       res.writeHead(201, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
-        data: insertedGame,
+        data: gameResponse,
       }, null, 2));
     } catch (error: any) {
       // Handle unique constraint violation (duplicate date)
@@ -190,7 +205,7 @@ const server = createServer(async (req, res) => {
   // GET /api/bogle/games?date=YYYY-MM-DD - Get game by date
   if (req.url?.startsWith('/api/bogle/games') && req.method === 'GET') {
     try {
-      const url = new URL(req.url, `http://${req.headers.host}`);
+      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const dateParam = url.searchParams.get('date');
 
       // If date parameter is provided, get game by date
@@ -221,11 +236,17 @@ const server = createServer(async (req, res) => {
           return;
         }
 
+        // Ensure rankType is properly handled (can be null)
+        const gameResponse = {
+          ...game,
+          rankType: game.rankType ?? null,
+        };
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
           date: dateParam,
-          data: game,
+          data: gameResponse,
         }, null, 2));
         return;
       }
@@ -236,14 +257,21 @@ const server = createServer(async (req, res) => {
         .from(bogleGames)
         .orderBy(desc(bogleGames.gameDate));
 
+      // Ensure rankType is properly handled for all games (can be null)
+      const gamesResponse = games.map(game => ({
+        ...game,
+        rankType: game.rankType ?? null,
+      }));
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
-        count: games.length,
-        data: games,
+        count: gamesResponse.length,
+        data: gamesResponse,
       }, null, 2));
     } catch (error) {
       console.error('Error fetching Bogle games:', error);
+      console.error('Error details:', error instanceof Error ? error.stack : error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         error: 'Internal Server Error',
@@ -365,10 +393,25 @@ const server = createServer(async (req, res) => {
         .where(eq(bogleGames.gameId, gameId))
         .returning();
 
+      if (!updatedGame) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Internal Server Error',
+          message: 'Failed to update game',
+        }, null, 2));
+        return;
+      }
+
+      // Ensure rankType is properly handled (can be null)
+      const gameResponse = {
+        ...updatedGame,
+        rankType: updatedGame.rankType ?? null,
+      };
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
-        data: updatedGame,
+        data: gameResponse,
       }, null, 2));
     } catch (error: any) {
       // Handle unique constraint violation (duplicate date)
