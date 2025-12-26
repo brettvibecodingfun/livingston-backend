@@ -141,10 +141,21 @@ const server = createServer(async (req, res) => {
         return;
       }
 
+      // Validate rankType if provided
+      if (body.rankType !== undefined && typeof body.rankType !== 'string') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Bad Request',
+          message: 'rankType must be a string if provided',
+        }, null, 2));
+        return;
+      }
+
       // Create new game record
       const newGame: NewBogleGame = {
         gameDate: body.gameDate,
         gameQuestion: body.gameQuestion,
+        rankType: body.rankType || null,
       };
 
       // Insert into database
@@ -324,12 +335,25 @@ const server = createServer(async (req, res) => {
         updateData.gameQuestion = body.gameQuestion;
       }
 
+      if (body.rankType !== undefined) {
+        if (body.rankType !== null && typeof body.rankType !== 'string') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Bad Request',
+            message: 'rankType must be a string or null if provided',
+          }, null, 2));
+          return;
+        }
+
+        updateData.rankType = body.rankType || null;
+      }
+
       // Check if at least one field is being updated
       if (Object.keys(updateData).length === 0) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           error: 'Bad Request',
-          message: 'At least one field (gameDate or gameQuestion) must be provided for update',
+          message: 'At least one field (gameDate, gameQuestion, or rankType) must be provided for update',
         }, null, 2));
         return;
       }

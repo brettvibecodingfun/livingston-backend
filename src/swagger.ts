@@ -112,6 +112,12 @@ export const swaggerSpec = {
                     type: 'string',
                     example: 'Name the top scorers under the age of 25',
                   },
+                  rankType: {
+                    type: 'string',
+                    nullable: true,
+                    description: 'Optional: Type of ranking (e.g., "rebounds per game", "assists per game")',
+                    example: 'rebounds per game',
+                  },
                 },
               },
             },
@@ -193,7 +199,7 @@ export const swaggerSpec = {
       patch: {
         tags: ['Bogle Games'],
         summary: 'Update a game',
-        description: 'Update gameDate and/or gameQuestion for an existing game',
+        description: 'Update gameDate, gameQuestion, and/or rankType for an existing game',
         parameters: [
           {
             name: 'gameId',
@@ -218,6 +224,12 @@ export const swaggerSpec = {
                   gameQuestion: {
                     type: 'string',
                     example: 'Updated question text',
+                  },
+                  rankType: {
+                    type: 'string',
+                    nullable: true,
+                    description: 'Optional: Type of ranking (e.g., "rebounds per game", "assists per game")',
+                    example: 'assists per game',
                   },
                 },
               },
@@ -402,6 +414,12 @@ export const swaggerSpec = {
             type: 'string',
             description: 'The question text/data for the game',
             example: 'Name the top scorers under the age of 25',
+          },
+          rankType: {
+            type: 'string',
+            nullable: true,
+            description: 'Optional: Type of ranking (e.g., "rebounds per game", "assists per game")',
+            example: 'rebounds per game',
           },
         },
         required: ['gameId', 'gameDate', 'gameQuestion'],

@@ -77,13 +77,17 @@ Create a new daily Bogle game.
 ```json
 {
   "gameDate": "2025-12-23",
-  "gameQuestion": "Name the top scorers under the age of 25"
+  "gameQuestion": "Name the top scorers under the age of 25",
+  "rankType": "rebounds per game"
 }
 ```
 
 **Required Fields:**
 - `gameDate` (string): Date in `YYYY-MM-DD` format
 - `gameQuestion` (string): The question text/data for the game
+
+**Optional Fields:**
+- `rankType` (string): Type of ranking (e.g., "rebounds per game", "assists per game", "points per game")
 
 **Response (201 Created):**
 ```json
@@ -108,7 +112,8 @@ curl -X POST http://localhost:3000/api/bogle/games \
   -H "Content-Type: application/json" \
   -d '{
     "gameDate": "2025-12-23",
-    "gameQuestion": "Name the top scorers under the age of 25"
+    "gameQuestion": "Name the top scorers under the age of 25",
+    "rankType": "rebounds per game"
   }'
 ```
 
@@ -125,13 +130,16 @@ Get all Bogle games, ordered by date (newest first).
   "data": [
     {
       "gameId": 2,
+      "gameId": 2,
       "gameDate": "2025-12-24",
-      "gameQuestion": "Name the top rebounders"
+      "gameQuestion": "Name the top rebounders",
+      "rankType": "rebounds per game"
     },
     {
       "gameId": 1,
       "gameDate": "2025-12-23",
-      "gameQuestion": "Name the top scorers under the age of 25"
+      "gameQuestion": "Name the top scorers under the age of 25",
+      "rankType": null
     }
   ]
 }
@@ -154,12 +162,13 @@ Get a specific game by date.
 ```json
 {
   "success": true,
-  "date": "2025-12-23",
-  "data": {
-    "gameId": 1,
-    "gameDate": "2025-12-23",
-    "gameQuestion": "Name the top scorers under the age of 25"
-  }
+      "date": "2025-12-23",
+      "data": {
+        "gameId": 1,
+        "gameDate": "2025-12-23",
+        "gameQuestion": "Name the top scorers under the age of 25",
+        "rankType": null
+      }
 }
 ```
 
@@ -176,7 +185,7 @@ curl "http://localhost:3000/api/bogle/games?date=2025-12-23"
 ---
 
 ### PATCH `/api/bogle/games/:gameId`
-Update an existing Bogle game. You can update either `gameDate`, `gameQuestion`, or both.
+Update an existing Bogle game. You can update `gameDate`, `gameQuestion`, and/or `rankType`.
 
 **URL Parameters:**
 - `gameId` (required): The ID of the game to update
@@ -185,21 +194,23 @@ Update an existing Bogle game. You can update either `gameDate`, `gameQuestion`,
 ```json
 {
   "gameDate": "2025-12-24",
-  "gameQuestion": "Updated question text"
+  "gameQuestion": "Updated question text",
+  "rankType": "assists per game"
 }
 ```
 
-**Note:** Both fields are optional. Provide only the fields you want to update.
+**Note:** All fields are optional. Provide only the fields you want to update. Set `rankType` to `null` to clear it.
 
 **Response (200 OK):**
 ```json
 {
   "success": true,
   "data": {
-    "gameId": 1,
-    "gameDate": "2025-12-24",
-    "gameQuestion": "Updated question text"
-  }
+        "gameId": 1,
+        "gameDate": "2025-12-24",
+        "gameQuestion": "Updated question text",
+        "rankType": "assists per game"
+      }
 }
 ```
 

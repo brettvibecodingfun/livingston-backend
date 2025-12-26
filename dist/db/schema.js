@@ -166,6 +166,7 @@ export const bogleGames = pgTable('bogle_games', {
     gameId: serial('game_id').primaryKey(),
     gameDate: date('game_date').notNull().unique(),
     gameQuestion: text('game_question').notNull(),
+    rankType: text('rank_type'), // Optional: e.g., "rebounds per game", "assists per game", etc.
 }, (table) => ({
     gameDateIdx: index('bogle_games_game_date_idx').on(table.gameDate),
 }));

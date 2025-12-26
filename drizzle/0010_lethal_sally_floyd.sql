@@ -1,0 +1,1 @@
+ALTER TABLE "bogle_games" ADD COLUMN "rank_type" text;
