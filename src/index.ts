@@ -151,11 +151,22 @@ const server = createServer(async (req, res) => {
         return;
       }
 
+      // Validate querySchema if provided
+      if (body.querySchema !== undefined && typeof body.querySchema !== 'string') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Bad Request',
+          message: 'querySchema must be a string if provided',
+        }, null, 2));
+        return;
+      }
+
       // Create new game record
       const newGame: NewBogleGame = {
         gameDate: body.gameDate,
         gameQuestion: body.gameQuestion,
         rankType: body.rankType || null,
+        querySchema: body.querySchema || null,
       };
 
       // Insert into database
@@ -170,10 +181,11 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      // Ensure rankType is properly handled (can be null)
+      // Ensure optional fields are properly handled (can be null)
       const gameResponse = {
         ...insertedGame,
         rankType: insertedGame.rankType ?? null,
+        querySchema: insertedGame.querySchema ?? null,
       };
 
       res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -236,10 +248,11 @@ const server = createServer(async (req, res) => {
           return;
         }
 
-        // Ensure rankType is properly handled (can be null)
+        // Ensure optional fields are properly handled (can be null)
         const gameResponse = {
           ...game,
           rankType: game.rankType ?? null,
+          querySchema: game.querySchema ?? null,
         };
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -257,10 +270,11 @@ const server = createServer(async (req, res) => {
         .from(bogleGames)
         .orderBy(desc(bogleGames.gameDate));
 
-      // Ensure rankType is properly handled for all games (can be null)
+      // Ensure optional fields are properly handled for all games (can be null)
       const gamesResponse = games.map(game => ({
         ...game,
         rankType: game.rankType ?? null,
+        querySchema: game.querySchema ?? null,
       }));
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -376,12 +390,25 @@ const server = createServer(async (req, res) => {
         updateData.rankType = body.rankType || null;
       }
 
+      if (body.querySchema !== undefined) {
+        if (body.querySchema !== null && typeof body.querySchema !== 'string') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Bad Request',
+            message: 'querySchema must be a string or null if provided',
+          }, null, 2));
+          return;
+        }
+
+        updateData.querySchema = body.querySchema || null;
+      }
+
       // Check if at least one field is being updated
       if (Object.keys(updateData).length === 0) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           error: 'Bad Request',
-          message: 'At least one field (gameDate, gameQuestion, or rankType) must be provided for update',
+          message: 'At least one field (gameDate, gameQuestion, rankType, or querySchema) must be provided for update',
         }, null, 2));
         return;
       }
@@ -402,10 +429,11 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      // Ensure rankType is properly handled (can be null)
+      // Ensure optional fields are properly handled (can be null)
       const gameResponse = {
         ...updatedGame,
         rankType: updatedGame.rankType ?? null,
+        querySchema: updatedGame.querySchema ?? null,
       };
 
       res.writeHead(200, { 'Content-Type': 'application/json' });

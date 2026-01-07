@@ -8,13 +8,9 @@ export const swaggerSpec = {
   },
   servers: [
     {
-      url: 'http://localhost:3000',
-      description: 'Local development server',
-    },
-    {
       url: 'https://livingston-backend.onrender.com',
       description: 'Production server',
-    },
+    }
   ],
   tags: [
     {
@@ -105,7 +101,7 @@ export const swaggerSpec = {
                   gameDate: {
                     type: 'string',
                     format: 'date',
-                    example: '2025-12-23',
+                    example: '2026-01-01',
                     description: 'Date in YYYY-MM-DD format',
                   },
                   gameQuestion: {
@@ -117,6 +113,12 @@ export const swaggerSpec = {
                     nullable: true,
                     description: 'Optional: Type of ranking (e.g., "rebounds per game", "assists per game")',
                     example: 'rebounds per game',
+                  },
+                  querySchema: {
+                    type: 'string',
+                    nullable: true,
+                    description: 'Optional: Schema/query definition for the game',
+                    example: '{"filters": {"age": {"max": 25}}}',
                   },
                 },
               },
@@ -155,7 +157,7 @@ export const swaggerSpec = {
             schema: {
               type: 'string',
               format: 'date',
-              example: '2025-12-23',
+              example: '2026-01-01',
             },
           },
         ],
@@ -199,7 +201,7 @@ export const swaggerSpec = {
       patch: {
         tags: ['Bogle Games'],
         summary: 'Update a game',
-        description: 'Update gameDate, gameQuestion, and/or rankType for an existing game',
+        description: 'Update gameDate, gameQuestion, rankType, and/or querySchema for an existing game',
         parameters: [
           {
             name: 'gameId',
@@ -219,7 +221,7 @@ export const swaggerSpec = {
                   gameDate: {
                     type: 'string',
                     format: 'date',
-                    example: '2025-12-24',
+                    example: '2026-01-01',
                   },
                   gameQuestion: {
                     type: 'string',
@@ -230,6 +232,12 @@ export const swaggerSpec = {
                     nullable: true,
                     description: 'Optional: Type of ranking (e.g., "rebounds per game", "assists per game")',
                     example: 'assists per game',
+                  },
+                  querySchema: {
+                    type: 'string',
+                    nullable: true,
+                    description: 'Optional: Schema/query definition for the game',
+                    example: '{"filters": {"age": {"max": 25}}}',
                   },
                 },
               },
@@ -364,7 +372,7 @@ export const swaggerSpec = {
             schema: {
               type: 'string',
               format: 'date',
-              example: '2025-12-23',
+              example: '2026-01-01',
             },
             description: 'Date in YYYY-MM-DD format',
           },
@@ -408,7 +416,7 @@ export const swaggerSpec = {
             type: 'string',
             format: 'date',
             description: 'Date of the game in YYYY-MM-DD format',
-            example: '2025-12-23',
+            example: '2026-01-01',
           },
           gameQuestion: {
             type: 'string',
@@ -420,6 +428,12 @@ export const swaggerSpec = {
             nullable: true,
             description: 'Optional: Type of ranking (e.g., "rebounds per game", "assists per game")',
             example: 'rebounds per game',
+          },
+          querySchema: {
+            type: 'string',
+            nullable: true,
+            description: 'Optional: Schema/query definition for the game',
+            example: '{"filters": {"age": {"max": 25}}}',
           },
         },
         required: ['gameId', 'gameDate', 'gameQuestion'],
@@ -451,7 +465,7 @@ export const swaggerSpec = {
             type: 'string',
             format: 'date',
             description: 'Date of the game',
-            example: '2025-12-23',
+            example: '2026-01-01',
           },
           gameQuestion: {
             type: 'string',

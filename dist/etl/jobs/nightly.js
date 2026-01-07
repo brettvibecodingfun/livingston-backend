@@ -78,7 +78,7 @@ export async function runNightlyJob(options = {}) {
         // Step 2: Load and upsert players (current NBA rosters only)
         // ========================================================================
         console.log('👥 Step 2: Loading current NBA players...');
-        const season = options.season || new Date().getFullYear();
+        const season = options.season || 2025;
         console.log(`  📅 Season: ${season}`);
         // Current NBA team IDs (1-30)
         const currentNbaTeamIds = Array.from({ length: 30 }, (_, i) => i + 1);

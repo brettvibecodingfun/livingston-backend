@@ -1,0 +1,1 @@
+ALTER TABLE "bogle_games" ADD COLUMN "query_schema" text;
