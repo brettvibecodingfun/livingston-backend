@@ -90,6 +90,7 @@ export const swaggerSpec = {
         tags: ['Bogle Games'],
         summary: 'Create a new game',
         description: 'Create a new daily Bogle game',
+        security: [{ ApiKeyAuth: [] }],
         requestBody: {
           required: true,
           content: {
@@ -141,6 +142,7 @@ export const swaggerSpec = {
             },
           },
           '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '401': { description: 'Unauthorized - Valid API key required', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           '409': { description: 'Conflict - Game for this date already exists', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
         },
       },
@@ -202,6 +204,7 @@ export const swaggerSpec = {
         tags: ['Bogle Games'],
         summary: 'Update a game',
         description: 'Update gameDate, gameQuestion, rankType, and/or querySchema for an existing game',
+        security: [{ ApiKeyAuth: [] }],
         parameters: [
           {
             name: 'gameId',
@@ -260,6 +263,7 @@ export const swaggerSpec = {
             },
           },
           '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '401': { description: 'Unauthorized - Valid API key required', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           '404': { description: 'Game not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           '409': { description: 'Conflict - Game for this date already exists', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
         },
@@ -270,6 +274,7 @@ export const swaggerSpec = {
         tags: ['Bogle Scores'],
         summary: 'Submit a score',
         description: 'Submit a new player score for a Bogle game',
+        security: [{ ApiKeyAuth: [] }],
         requestBody: {
           required: true,
           content: {
@@ -319,6 +324,7 @@ export const swaggerSpec = {
             },
           },
           '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '401': { description: 'Unauthorized - Valid API key required', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           '404': { description: 'Game not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           '409': { description: 'Conflict - Score already exists for this user and game', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
         },
@@ -329,6 +335,7 @@ export const swaggerSpec = {
         tags: ['Bogle Scores'],
         summary: 'Delete a score',
         description: 'Delete a score by its ID',
+        security: [{ ApiKeyAuth: [] }],
         parameters: [
           {
             name: 'id',
@@ -355,6 +362,7 @@ export const swaggerSpec = {
             },
           },
           '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '401': { description: 'Unauthorized - Valid API key required', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           '404': { description: 'Score not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
         },
       },
@@ -403,6 +411,14 @@ export const swaggerSpec = {
     },
   },
   components: {
+    securitySchemes: {
+      ApiKeyAuth: {
+        type: 'apiKey',
+        in: 'header',
+        name: 'X-API-Key',
+        description: 'API key for authentication. Can also be provided in Authorization header as Bearer token.',
+      },
+    },
     schemas: {
       BogleGame: {
         type: 'object',

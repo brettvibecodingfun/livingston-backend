@@ -192,6 +192,8 @@ export const bogleScores = pgTable('bogle_scores', {
   gameDate: date('game_date').notNull(),
   gameQuestion: text('game_question').notNull(),
   timeTaken: integer('time_taken'), // Time in seconds (optional)
+  answersCorrect: text('answers_correct').array(), // Optional array of correct answers
+  answersMissed: text('answers_missed').array(), // Optional array of missed answers
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   usernameGameIdUnique: unique('bogle_scores_username_game_id_unique').on(table.username, table.gameId),
