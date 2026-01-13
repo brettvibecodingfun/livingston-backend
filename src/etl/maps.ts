@@ -1,4 +1,4 @@
-import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding, ApiSeasonAverage } from './providers/balldontlie.js';
+import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding, ApiSeasonAverage, ApiAdvancedSeasonAverage } from './providers/balldontlie.js';
 import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage } from '../db/schema.js';
 import { parseMinutes } from './providers/balldontlie.js';
 import { getPlayerBirthdate, calculateAge } from './constants/player-birthdates.js';
@@ -154,8 +154,12 @@ export function mapStandingToDb(apiStanding: ApiStanding, teamId: number): NewSt
  * Note: playerId will be resolved via player api_id lookup
  * API response has nested structure: player.id and stats object
  */
-export function mapSeasonAverageToDb(apiSeasonAverage: ApiSeasonAverage, playerId: number): NewSeasonAverage {
+export function mapSeasonAverageToDb(
+  apiSeasonAverage: ApiSeasonAverage | ApiAdvancedSeasonAverage, 
+  playerId: number
+): NewSeasonAverage {
   const stats = apiSeasonAverage.stats || {};
+  const advancedStats = stats as any; // Type assertion to access advanced stats fields
   
   return {
     playerId,
@@ -177,5 +181,40 @@ export function mapSeasonAverageToDb(apiSeasonAverage: ApiSeasonAverage, playerI
     ftm: stats.ftm ?? null,
     fta: stats.fta ?? null,
     ftPct: stats.ft_pct ?? null,
+    // Advanced stats fields (will be null if not present in ApiSeasonAverage)
+    losses: advancedStats.l ?? null,
+    wins: advancedStats.w ?? null,
+    age: advancedStats.age ?? null,
+    pie: advancedStats.pie ?? null,
+    pace: advancedStats.pace ?? null,
+    possessions: advancedStats.poss ?? null,
+    winPct: advancedStats.w_pct ?? null,
+    astTo: advancedStats.ast_to ?? null,
+    ePace: advancedStats.e_pace ?? null,
+    fgaPg: advancedStats.fga_pg ?? null,
+    fgmPg: advancedStats.fgm_pg ?? null,
+    tsPct: advancedStats.ts_pct ?? null,
+    astPct: advancedStats.ast_pct ?? null,
+    efgPct: advancedStats.efg_pct ?? null,
+    rebPct: advancedStats.reb_pct ?? null,
+    usgPct: advancedStats.usg_pct ?? null,
+    drebPct: advancedStats.dreb_pct ?? null,
+    orebPct: advancedStats.oreb_pct ?? null,
+    astRatio: advancedStats.ast_ratio ?? null,
+    eTovPct: advancedStats.e_tov_pct ?? null,
+    eUsgPct: advancedStats.e_usg_pct ?? null,
+    defRating: advancedStats.def_rating ?? null,
+    netRating: advancedStats.net_rating ?? null,
+    offRating: advancedStats.off_rating ?? null,
+    pacePer40: advancedStats.pace_per40 ?? null,
+    teamCount: advancedStats.team_count ?? null,
+    tmTovPct: advancedStats.tm_tov_pct ?? null,
+    eDefRating: advancedStats.e_def_rating ?? null,
+    eNetRating: advancedStats.e_net_rating ?? null,
+    eOffRating: advancedStats.e_off_rating ?? null,
+    spWorkPace: advancedStats.sp_work_pace ?? null,
+    spWorkDefRating: advancedStats.sp_work_def_rating ?? null,
+    spWorkNetRating: advancedStats.sp_work_net_rating ?? null,
+    spWorkOffRating: advancedStats.sp_work_off_rating ?? null,
   };
 }

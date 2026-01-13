@@ -132,6 +132,41 @@ export const seasonAverages = pgTable('season_averages', {
     ftm: real('ftm'),
     fta: real('fta'),
     ftPct: real('ft_pct'), // Free throw percentage
+    // Advanced stats fields
+    losses: integer('losses'),
+    wins: integer('wins'),
+    age: integer('age'),
+    pie: real('pie'), // Player impact estimate
+    pace: real('pace'),
+    possessions: integer('possessions'),
+    winPct: real('win_pct'),
+    astTo: real('ast_to'), // Assist to turnover ratio
+    ePace: real('e_pace'), // Estimated pace
+    fgaPg: real('fga_pg'), // Field goals attempted per game
+    fgmPg: real('fgm_pg'), // Field goals made per game
+    tsPct: real('ts_pct'), // True shooting percentage
+    astPct: real('ast_pct'), // Assist percentage
+    efgPct: real('efg_pct'), // Effective field goal percentage
+    rebPct: real('reb_pct'), // Rebound percentage
+    usgPct: real('usg_pct'), // Usage percentage
+    drebPct: real('dreb_pct'), // Defensive rebound percentage
+    orebPct: real('oreb_pct'), // Offensive rebound percentage
+    astRatio: real('ast_ratio'), // Assist ratio
+    eTovPct: real('e_tov_pct'), // Estimated turnover percentage
+    eUsgPct: real('e_usg_pct'), // Estimated usage percentage
+    defRating: real('def_rating'), // Defensive rating
+    netRating: real('net_rating'), // Net rating
+    offRating: real('off_rating'), // Offensive rating
+    pacePer40: real('pace_per40'), // Pace per 40 minutes
+    teamCount: integer('team_count'),
+    tmTovPct: real('tm_tov_pct'), // Team turnover percentage
+    eDefRating: real('e_def_rating'), // Estimated defensive rating
+    eNetRating: real('e_net_rating'), // Estimated net rating
+    eOffRating: real('e_off_rating'), // Estimated offensive rating
+    spWorkPace: real('sp_work_pace'), // Space work pace
+    spWorkDefRating: real('sp_work_def_rating'), // Space work defensive rating
+    spWorkNetRating: real('sp_work_net_rating'), // Space work net rating
+    spWorkOffRating: real('sp_work_off_rating'), // Space work offensive rating
 }, (table) => ({
     playerSeasonUnique: unique('season_averages_player_season_unique').on(table.playerId, table.season),
     playerIdIdx: index('season_averages_player_id_idx').on(table.playerId),

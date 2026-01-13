@@ -174,6 +174,80 @@ const SeasonAverageSchema = z.object({
         ft_pct: z.number().nullable().optional(),
     }),
 }).passthrough(); // Allow extra fields we don't know about
+// Advanced season averages schema with all advanced stats (excluding rankings)
+const AdvancedSeasonAverageSchema = z.object({
+    season: z.number(),
+    player: z.object({
+        id: z.number(),
+        first_name: z.string().optional(),
+        last_name: z.string().optional(),
+        position: z.string().nullable().optional(),
+        height: z.string().nullable().optional(),
+        weight: z.string().nullable().optional(),
+        jersey_number: z.string().nullable().optional(),
+        college: z.string().nullable().optional(),
+        country: z.string().nullable().optional(),
+        draft_year: z.number().nullable().optional(),
+        draft_round: z.number().nullable().optional(),
+        draft_number: z.number().nullable().optional(),
+    }),
+    season_type: z.string().optional(),
+    stats: z.object({
+        // Base stats (same as SeasonAverageSchema)
+        gp: z.number().nullable().optional(),
+        min: z.number().nullable().optional(),
+        pts: z.number().nullable().optional(),
+        ast: z.number().nullable().optional(),
+        reb: z.number().nullable().optional(),
+        stl: z.number().nullable().optional(),
+        blk: z.number().nullable().optional(),
+        tov: z.number().nullable().optional(),
+        fgm: z.number().nullable().optional(),
+        fga: z.number().nullable().optional(),
+        fg_pct: z.number().nullable().optional(),
+        fg3m: z.number().nullable().optional(),
+        fg3a: z.number().nullable().optional(),
+        fg3_pct: z.number().nullable().optional(),
+        ftm: z.number().nullable().optional(),
+        fta: z.number().nullable().optional(),
+        ft_pct: z.number().nullable().optional(),
+        // Advanced stats (excluding rankings)
+        l: z.number().nullable().optional(), // losses
+        w: z.number().nullable().optional(), // wins
+        age: z.number().nullable().optional(),
+        pie: z.number().nullable().optional(), // Player impact estimate
+        pace: z.number().nullable().optional(),
+        poss: z.number().nullable().optional(), // possessions
+        w_pct: z.number().nullable().optional(), // win percentage
+        ast_to: z.number().nullable().optional(), // assist to turnover ratio
+        e_pace: z.number().nullable().optional(), // estimated pace
+        fga_pg: z.number().nullable().optional(), // field goals attempted per game
+        fgm_pg: z.number().nullable().optional(), // field goals made per game
+        ts_pct: z.number().nullable().optional(), // true shooting percentage
+        ast_pct: z.number().nullable().optional(), // assist percentage
+        efg_pct: z.number().nullable().optional(), // effective field goal percentage
+        reb_pct: z.number().nullable().optional(), // rebound percentage
+        usg_pct: z.number().nullable().optional(), // usage percentage
+        dreb_pct: z.number().nullable().optional(), // defensive rebound percentage
+        oreb_pct: z.number().nullable().optional(), // offensive rebound percentage
+        ast_ratio: z.number().nullable().optional(), // assist ratio
+        e_tov_pct: z.number().nullable().optional(), // estimated turnover percentage
+        e_usg_pct: z.number().nullable().optional(), // estimated usage percentage
+        def_rating: z.number().nullable().optional(), // defensive rating
+        net_rating: z.number().nullable().optional(), // net rating
+        off_rating: z.number().nullable().optional(), // offensive rating
+        pace_per40: z.number().nullable().optional(), // pace per 40 minutes
+        team_count: z.number().nullable().optional(),
+        tm_tov_pct: z.number().nullable().optional(), // team turnover percentage
+        e_def_rating: z.number().nullable().optional(), // estimated defensive rating
+        e_net_rating: z.number().nullable().optional(), // estimated net rating
+        e_off_rating: z.number().nullable().optional(), // estimated offensive rating
+        sp_work_pace: z.number().nullable().optional(), // space work pace
+        sp_work_def_rating: z.number().nullable().optional(), // space work defensive rating
+        sp_work_net_rating: z.number().nullable().optional(), // space work net rating
+        sp_work_off_rating: z.number().nullable().optional(), // space work offensive rating
+    }),
+}).passthrough(); // Allow extra fields we don't know about
 const ContractSchema = z.object({
     id: z.number(),
     player_id: z.number(),
@@ -404,6 +478,59 @@ export async function fetchSeasonAverages(season, seasonType = 'regular', player
         }
     }
     console.log(`  ✅ Fetched ${allResults.length} valid season averages from ${batches.length} batches`);
+    return allResults;
+}
+/**
+ * Fetch advanced season averages for general/advanced stats
+ * Category: general, Type: advanced
+ * Can filter by player_ids array for efficiency
+ * Batches player_ids into chunks of 25 to avoid URL length limits
+ */
+export async function fetchAdvancedSeasonAverages(season, seasonType = 'regular', playerIds) {
+    console.log(`📊 Fetching advanced season averages (general/advanced) for season ${season}...`);
+    const params = {
+        season,
+        season_type: seasonType,
+        type: 'advanced',
+    };
+    // If no player IDs provided, fetch all (not recommended)
+    if (!playerIds || playerIds.length === 0) {
+        console.log(`  ⚠️  No player IDs provided, fetching all advanced season averages`);
+        const response = await fetchFromAPI('/season_averages/general', z.object({ data: z.array(AdvancedSeasonAverageSchema) }), params);
+        return response.data.filter(avg => avg.player?.id !== undefined && avg.player?.id !== null);
+    }
+    // Batch player IDs into chunks of 25 to avoid URL length limits
+    const BATCH_SIZE = 25;
+    const batches = [];
+    for (let i = 0; i < playerIds.length; i += BATCH_SIZE) {
+        batches.push(playerIds.slice(i, i + BATCH_SIZE));
+    }
+    console.log(`  👥 Filtering by ${playerIds.length} player IDs (${batches.length} batches)`);
+    const allResults = [];
+    // Fetch each batch
+    for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        console.log(`  📦 Batch ${i + 1}/${batches.length}: ${batch.length} players`);
+        const batchParams = {
+            ...params,
+            player_ids: batch,
+        };
+        const response = await fetchFromAPI('/season_averages/general', z.object({ data: z.array(AdvancedSeasonAverageSchema) }), batchParams);
+        // Filter to only include entries with player.id and season (required for our use case)
+        const validResults = response.data.filter(avg => avg.player?.id !== undefined &&
+            avg.player?.id !== null &&
+            avg.season !== undefined &&
+            avg.season !== null);
+        if (validResults.length < response.data.length) {
+            console.log(`    ⚠️  Filtered out ${response.data.length - validResults.length} entries missing player.id or season`);
+        }
+        allResults.push(...validResults);
+        // Throttle between batches to respect rate limits
+        if (i < batches.length - 1) {
+            await throttle();
+        }
+    }
+    console.log(`  ✅ Fetched ${allResults.length} valid advanced season averages from ${batches.length} batches`);
     return allResults;
 }
 /**

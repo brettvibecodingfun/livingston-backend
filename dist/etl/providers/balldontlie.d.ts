@@ -171,6 +171,77 @@ declare const SeasonAverageSchema: z.ZodObject<{
         ft_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
     }, z.core.$strip>;
 }, z.core.$loose>;
+declare const AdvancedSeasonAverageSchema: z.ZodObject<{
+    season: z.ZodNumber;
+    player: z.ZodObject<{
+        id: z.ZodNumber;
+        first_name: z.ZodOptional<z.ZodString>;
+        last_name: z.ZodOptional<z.ZodString>;
+        position: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        height: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        weight: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        jersey_number: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        college: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        country: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        draft_year: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        draft_round: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        draft_number: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    }, z.core.$strip>;
+    season_type: z.ZodOptional<z.ZodString>;
+    stats: z.ZodObject<{
+        gp: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        min: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        pts: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ast: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        reb: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        stl: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        blk: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        tov: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fgm: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fga: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3m: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3a: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ftm: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fta: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ft_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        l: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        w: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        age: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        pie: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        pace: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        poss: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        w_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ast_to: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        e_pace: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fga_pg: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fgm_pg: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ts_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ast_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        efg_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        reb_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        usg_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        dreb_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        oreb_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ast_ratio: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        e_tov_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        e_usg_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        def_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        net_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        off_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        pace_per40: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        team_count: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        tm_tov_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        e_def_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        e_net_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        e_off_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        sp_work_pace: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        sp_work_def_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        sp_work_net_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        sp_work_off_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    }, z.core.$strip>;
+}, z.core.$loose>;
 declare const ContractSchema: z.ZodObject<{
     id: z.ZodNumber;
     player_id: z.ZodNumber;
@@ -211,6 +282,7 @@ export type ApiBoxScore = z.infer<typeof BoxScoreSchema>;
 export type ApiLeader = z.infer<typeof LeaderSchema>;
 export type ApiStanding = z.infer<typeof StandingSchema>;
 export type ApiSeasonAverage = z.infer<typeof SeasonAverageSchema>;
+export type ApiAdvancedSeasonAverage = z.infer<typeof AdvancedSeasonAverageSchema>;
 export type ApiContract = z.infer<typeof ContractSchema>;
 /**
  * Fetch all NBA teams
@@ -247,6 +319,13 @@ export declare function fetchStandings(season: number): Promise<ApiStanding[]>;
  * Batches player_ids into chunks of 25 to avoid URL length limits
  */
 export declare function fetchSeasonAverages(season: number, seasonType?: string, playerIds?: number[]): Promise<ApiSeasonAverage[]>;
+/**
+ * Fetch advanced season averages for general/advanced stats
+ * Category: general, Type: advanced
+ * Can filter by player_ids array for efficiency
+ * Batches player_ids into chunks of 25 to avoid URL length limits
+ */
+export declare function fetchAdvancedSeasonAverages(season: number, seasonType?: string, playerIds?: number[]): Promise<ApiAdvancedSeasonAverage[]>;
 /**
  * Fetch team contracts for a specific team and season
  * Endpoint: GET /contracts/teams

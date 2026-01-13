@@ -132,6 +132,7 @@ export function mapStandingToDb(apiStanding, teamId) {
  */
 export function mapSeasonAverageToDb(apiSeasonAverage, playerId) {
     const stats = apiSeasonAverage.stats || {};
+    const advancedStats = stats; // Type assertion to access advanced stats fields
     return {
         playerId,
         season: apiSeasonAverage.season,
@@ -152,6 +153,41 @@ export function mapSeasonAverageToDb(apiSeasonAverage, playerId) {
         ftm: stats.ftm ?? null,
         fta: stats.fta ?? null,
         ftPct: stats.ft_pct ?? null,
+        // Advanced stats fields (will be null if not present in ApiSeasonAverage)
+        losses: advancedStats.l ?? null,
+        wins: advancedStats.w ?? null,
+        age: advancedStats.age ?? null,
+        pie: advancedStats.pie ?? null,
+        pace: advancedStats.pace ?? null,
+        possessions: advancedStats.poss ?? null,
+        winPct: advancedStats.w_pct ?? null,
+        astTo: advancedStats.ast_to ?? null,
+        ePace: advancedStats.e_pace ?? null,
+        fgaPg: advancedStats.fga_pg ?? null,
+        fgmPg: advancedStats.fgm_pg ?? null,
+        tsPct: advancedStats.ts_pct ?? null,
+        astPct: advancedStats.ast_pct ?? null,
+        efgPct: advancedStats.efg_pct ?? null,
+        rebPct: advancedStats.reb_pct ?? null,
+        usgPct: advancedStats.usg_pct ?? null,
+        drebPct: advancedStats.dreb_pct ?? null,
+        orebPct: advancedStats.oreb_pct ?? null,
+        astRatio: advancedStats.ast_ratio ?? null,
+        eTovPct: advancedStats.e_tov_pct ?? null,
+        eUsgPct: advancedStats.e_usg_pct ?? null,
+        defRating: advancedStats.def_rating ?? null,
+        netRating: advancedStats.net_rating ?? null,
+        offRating: advancedStats.off_rating ?? null,
+        pacePer40: advancedStats.pace_per40 ?? null,
+        teamCount: advancedStats.team_count ?? null,
+        tmTovPct: advancedStats.tm_tov_pct ?? null,
+        eDefRating: advancedStats.e_def_rating ?? null,
+        eNetRating: advancedStats.e_net_rating ?? null,
+        eOffRating: advancedStats.e_off_rating ?? null,
+        spWorkPace: advancedStats.sp_work_pace ?? null,
+        spWorkDefRating: advancedStats.sp_work_def_rating ?? null,
+        spWorkNetRating: advancedStats.sp_work_net_rating ?? null,
+        spWorkOffRating: advancedStats.sp_work_off_rating ?? null,
     };
 }
 //# sourceMappingURL=maps.js.map

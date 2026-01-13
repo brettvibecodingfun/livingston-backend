@@ -4,7 +4,7 @@ import { join } from 'path';
 import { db, pool } from '../../db/client.js';
 import { players, teams } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { fetchTeams, fetchPlayers, fetchGamesByDate, fetchBoxScoresByGame, fetchLeaders, fetchStandings, fetchSeasonAverages, fetchTeamContracts, } from '../providers/balldontlie.js';
+import { fetchTeams, fetchPlayers, fetchGamesByDate, fetchBoxScoresByGame, fetchLeaders, fetchStandings, fetchSeasonAverages, fetchAdvancedSeasonAverages, fetchTeamContracts, } from '../providers/balldontlie.js';
 import { mapTeamToDb, mapPlayerToDb, mapGameToDb, mapBoxScoreToDb, mapLeaderToDb, mapStandingToDb, mapSeasonAverageToDb, } from '../maps.js';
 import { upsertTeam, upsertPlayer, upsertGame, upsertBoxScore, upsertLeader, upsertStanding, upsertSeasonAverage, buildTeamIdMap, buildPlayerIdMap, updatePlayerBaseSalary, } from '../upserts.js';
 dotenv.config();
@@ -254,6 +254,37 @@ export async function runNightlyJob(options = {}) {
             }
         }
         console.log(`  ✅ Upserted ${seasonAveragesCount} season averages\n`);
+        // ========================================================================
+        // Step 7b: Load advanced season averages
+        // ========================================================================
+        console.log('📊 Step 7b: Loading advanced season averages...');
+        let advancedSeasonAveragesCount = 0;
+        // Fetch advanced season averages for the same players
+        const apiAdvancedSeasonAverages = await retryWithBackoff(() => fetchAdvancedSeasonAverages(season, 'regular', playerApiIdsForAverages));
+        console.log(`  📥 Fetched ${apiAdvancedSeasonAverages.length} advanced season averages for season ${season}`);
+        for (const apiAdvancedSeasonAverage of apiAdvancedSeasonAverages) {
+            const playerApiId = apiAdvancedSeasonAverage.player?.id;
+            if (!playerApiId) {
+                console.warn(`  ⚠️  Advanced season average entry missing player.id, skipping`);
+                continue;
+            }
+            const playerId = playerIdMap.get(playerApiId);
+            if (!playerId) {
+                console.warn(`  ⚠️  Missing player FK for advanced season average player_id ${playerApiId}, skipping`);
+                continue;
+            }
+            try {
+                // Map advanced stats and upsert (will merge with existing base stats)
+                const seasonAverageRow = mapSeasonAverageToDb(apiAdvancedSeasonAverage, playerId);
+                await upsertSeasonAverage(seasonAverageRow);
+                advancedSeasonAveragesCount++;
+            }
+            catch (error) {
+                console.warn(`  ⚠️  Error mapping advanced season average for player_id ${playerApiId}:`, error);
+                continue;
+            }
+        }
+        console.log(`  ✅ Upserted ${advancedSeasonAveragesCount} advanced season averages\n`);
         // ========================================================================
         // Step 8: Load and update player contracts (base salary)
         // ========================================================================
