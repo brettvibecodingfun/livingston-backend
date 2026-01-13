@@ -72,6 +72,46 @@ async function handlePostScore(req: any, res: any): Promise<boolean> {
         return true;
       }
 
+      // Validate answersCorrect if provided
+      if (body.answersCorrect !== undefined) {
+        if (!Array.isArray(body.answersCorrect)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Bad Request',
+            message: 'answersCorrect must be an array of strings if provided',
+          }, null, 2));
+          return true;
+        }
+        if (!body.answersCorrect.every((item: any) => typeof item === 'string')) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Bad Request',
+            message: 'answersCorrect must be an array of strings if provided',
+          }, null, 2));
+          return true;
+        }
+      }
+
+      // Validate answersMissed if provided
+      if (body.answersMissed !== undefined) {
+        if (!Array.isArray(body.answersMissed)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Bad Request',
+            message: 'answersMissed must be an array of strings if provided',
+          }, null, 2));
+          return true;
+        }
+        if (!body.answersMissed.every((item: any) => typeof item === 'string')) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Bad Request',
+            message: 'answersMissed must be an array of strings if provided',
+          }, null, 2));
+          return true;
+        }
+      }
+
       // Create new score record
       const newScore: NewBogleScore = {
         gameId: Math.round(body.gameId),
@@ -80,6 +120,8 @@ async function handlePostScore(req: any, res: any): Promise<boolean> {
         gameDate: game.gameDate,
         gameQuestion: game.gameQuestion,
         timeTaken: body.timeTaken !== undefined ? Math.round(body.timeTaken) : null,
+        answersCorrect: body.answersCorrect !== undefined ? body.answersCorrect : null,
+        answersMissed: body.answersMissed !== undefined ? body.answersMissed : null,
       };
 
       // Insert into database
