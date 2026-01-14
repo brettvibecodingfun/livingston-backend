@@ -39,6 +39,8 @@ export declare function upsertLeader(row: NewLeader): Promise<number>;
 export declare function upsertStanding(row: NewStanding): Promise<number>;
 /**
  * Upsert season averages by (player_id, season)
+ * Uses ON CONFLICT DO UPDATE to merge fields, preserving existing values when new values are null
+ * This allows us to update base stats and advanced stats separately without overwriting each other
  */
 export declare function upsertSeasonAverage(row: NewSeasonAverage): Promise<number>;
 /**

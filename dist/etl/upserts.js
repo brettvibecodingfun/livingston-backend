@@ -153,18 +153,73 @@ export async function upsertStanding(row) {
 }
 /**
  * Upsert season averages by (player_id, season)
+ * Uses ON CONFLICT DO UPDATE to merge fields, preserving existing values when new values are null
+ * This allows us to update base stats and advanced stats separately without overwriting each other
  */
 export async function upsertSeasonAverage(row) {
-    return await db.transaction(async (tx) => {
-        await tx
-            .delete(seasonAverages)
-            .where(and(eq(seasonAverages.playerId, row.playerId), eq(seasonAverages.season, row.season)));
-        const result = await tx
-            .insert(seasonAverages)
-            .values(row)
-            .returning({ id: seasonAverages.id });
-        return result[0].id;
-    });
+    const result = await db
+        .insert(seasonAverages)
+        .values(row)
+        .onConflictDoUpdate({
+        target: [seasonAverages.playerId, seasonAverages.season],
+        set: {
+            // Base stats - use COALESCE to preserve existing value if new value is null
+            gamesPlayed: sql `COALESCE(EXCLUDED.games_played, season_averages.games_played)`,
+            minutes: sql `COALESCE(EXCLUDED.minutes, season_averages.minutes)`,
+            points: sql `COALESCE(EXCLUDED.points, season_averages.points)`,
+            assists: sql `COALESCE(EXCLUDED.assists, season_averages.assists)`,
+            rebounds: sql `COALESCE(EXCLUDED.rebounds, season_averages.rebounds)`,
+            steals: sql `COALESCE(EXCLUDED.steals, season_averages.steals)`,
+            blocks: sql `COALESCE(EXCLUDED.blocks, season_averages.blocks)`,
+            turnovers: sql `COALESCE(EXCLUDED.turnovers, season_averages.turnovers)`,
+            fgm: sql `COALESCE(EXCLUDED.fgm, season_averages.fgm)`,
+            fga: sql `COALESCE(EXCLUDED.fga, season_averages.fga)`,
+            fgPct: sql `COALESCE(EXCLUDED.fg_pct, season_averages.fg_pct)`,
+            tpm: sql `COALESCE(EXCLUDED.tpm, season_averages.tpm)`,
+            tpa: sql `COALESCE(EXCLUDED.tpa, season_averages.tpa)`,
+            threePct: sql `COALESCE(EXCLUDED.three_pct, season_averages.three_pct)`,
+            ftm: sql `COALESCE(EXCLUDED.ftm, season_averages.ftm)`,
+            fta: sql `COALESCE(EXCLUDED.fta, season_averages.fta)`,
+            ftPct: sql `COALESCE(EXCLUDED.ft_pct, season_averages.ft_pct)`,
+            // Advanced stats - use COALESCE to preserve existing value if new value is null
+            losses: sql `COALESCE(EXCLUDED.losses, season_averages.losses)`,
+            wins: sql `COALESCE(EXCLUDED.wins, season_averages.wins)`,
+            age: sql `COALESCE(EXCLUDED.age, season_averages.age)`,
+            pie: sql `COALESCE(EXCLUDED.pie, season_averages.pie)`,
+            pace: sql `COALESCE(EXCLUDED.pace, season_averages.pace)`,
+            possessions: sql `COALESCE(EXCLUDED.possessions, season_averages.possessions)`,
+            winPct: sql `COALESCE(EXCLUDED.win_pct, season_averages.win_pct)`,
+            astTo: sql `COALESCE(EXCLUDED.ast_to, season_averages.ast_to)`,
+            ePace: sql `COALESCE(EXCLUDED.e_pace, season_averages.e_pace)`,
+            fgaPg: sql `COALESCE(EXCLUDED.fga_pg, season_averages.fga_pg)`,
+            fgmPg: sql `COALESCE(EXCLUDED.fgm_pg, season_averages.fgm_pg)`,
+            tsPct: sql `COALESCE(EXCLUDED.ts_pct, season_averages.ts_pct)`,
+            astPct: sql `COALESCE(EXCLUDED.ast_pct, season_averages.ast_pct)`,
+            efgPct: sql `COALESCE(EXCLUDED.efg_pct, season_averages.efg_pct)`,
+            rebPct: sql `COALESCE(EXCLUDED.reb_pct, season_averages.reb_pct)`,
+            usgPct: sql `COALESCE(EXCLUDED.usg_pct, season_averages.usg_pct)`,
+            drebPct: sql `COALESCE(EXCLUDED.dreb_pct, season_averages.dreb_pct)`,
+            orebPct: sql `COALESCE(EXCLUDED.oreb_pct, season_averages.oreb_pct)`,
+            astRatio: sql `COALESCE(EXCLUDED.ast_ratio, season_averages.ast_ratio)`,
+            eTovPct: sql `COALESCE(EXCLUDED.e_tov_pct, season_averages.e_tov_pct)`,
+            eUsgPct: sql `COALESCE(EXCLUDED.e_usg_pct, season_averages.e_usg_pct)`,
+            defRating: sql `COALESCE(EXCLUDED.def_rating, season_averages.def_rating)`,
+            netRating: sql `COALESCE(EXCLUDED.net_rating, season_averages.net_rating)`,
+            offRating: sql `COALESCE(EXCLUDED.off_rating, season_averages.off_rating)`,
+            pacePer40: sql `COALESCE(EXCLUDED.pace_per40, season_averages.pace_per40)`,
+            teamCount: sql `COALESCE(EXCLUDED.team_count, season_averages.team_count)`,
+            tmTovPct: sql `COALESCE(EXCLUDED.tm_tov_pct, season_averages.tm_tov_pct)`,
+            eDefRating: sql `COALESCE(EXCLUDED.e_def_rating, season_averages.e_def_rating)`,
+            eNetRating: sql `COALESCE(EXCLUDED.e_net_rating, season_averages.e_net_rating)`,
+            eOffRating: sql `COALESCE(EXCLUDED.e_off_rating, season_averages.e_off_rating)`,
+            spWorkPace: sql `COALESCE(EXCLUDED.sp_work_pace, season_averages.sp_work_pace)`,
+            spWorkDefRating: sql `COALESCE(EXCLUDED.sp_work_def_rating, season_averages.sp_work_def_rating)`,
+            spWorkNetRating: sql `COALESCE(EXCLUDED.sp_work_net_rating, season_averages.sp_work_net_rating)`,
+            spWorkOffRating: sql `COALESCE(EXCLUDED.sp_work_off_rating, season_averages.sp_work_off_rating)`,
+        },
+    })
+        .returning({ id: seasonAverages.id });
+    return result[0].id;
 }
 // ============================================================================
 // Helper Functions for FK Resolution
