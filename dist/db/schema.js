@@ -173,6 +173,72 @@ export const seasonAverages = pgTable('season_averages', {
     seasonIdx: index('season_averages_season_idx').on(table.season),
 }));
 /**
+ * Clutch Season Averages table
+ * Stores clutch time season averages for NBA players
+ * Same structure as season_averages but for clutch time situations
+ */
+export const clutchSeasonAverages = pgTable('clutch_season_averages', {
+    id: serial('id').primaryKey(),
+    playerId: integer('player_id').references(() => players.id).notNull(),
+    season: integer('season').notNull(),
+    gamesPlayed: integer('games_played'),
+    minutes: real('minutes'),
+    points: real('points'),
+    assists: real('assists'),
+    rebounds: real('rebounds'),
+    steals: real('steals'),
+    blocks: real('blocks'),
+    turnovers: real('turnovers'),
+    fgm: real('fgm'),
+    fga: real('fga'),
+    fgPct: real('fg_pct'), // Field goal percentage
+    tpm: real('tpm'),
+    tpa: real('tpa'),
+    threePct: real('three_pct'), // Three point percentage
+    ftm: real('ftm'),
+    fta: real('fta'),
+    ftPct: real('ft_pct'), // Free throw percentage
+    // Advanced stats fields
+    losses: integer('losses'),
+    wins: integer('wins'),
+    age: integer('age'),
+    pie: real('pie'), // Player impact estimate
+    pace: real('pace'),
+    possessions: integer('possessions'),
+    winPct: real('win_pct'),
+    astTo: real('ast_to'), // Assist to turnover ratio
+    ePace: real('e_pace'), // Estimated pace
+    fgaPg: real('fga_pg'), // Field goals attempted per game
+    fgmPg: real('fgm_pg'), // Field goals made per game
+    tsPct: real('ts_pct'), // True shooting percentage
+    astPct: real('ast_pct'), // Assist percentage
+    efgPct: real('efg_pct'), // Effective field goal percentage
+    rebPct: real('reb_pct'), // Rebound percentage
+    usgPct: real('usg_pct'), // Usage percentage
+    drebPct: real('dreb_pct'), // Defensive rebound percentage
+    orebPct: real('oreb_pct'), // Offensive rebound percentage
+    astRatio: real('ast_ratio'), // Assist ratio
+    eTovPct: real('e_tov_pct'), // Estimated turnover percentage
+    eUsgPct: real('e_usg_pct'), // Estimated usage percentage
+    defRating: real('def_rating'), // Defensive rating
+    netRating: real('net_rating'), // Net rating
+    offRating: real('off_rating'), // Offensive rating
+    pacePer40: real('pace_per40'), // Pace per 40 minutes
+    teamCount: integer('team_count'),
+    tmTovPct: real('tm_tov_pct'), // Team turnover percentage
+    eDefRating: real('e_def_rating'), // Estimated defensive rating
+    eNetRating: real('e_net_rating'), // Estimated net rating
+    eOffRating: real('e_off_rating'), // Estimated offensive rating
+    spWorkPace: real('sp_work_pace'), // Space work pace
+    spWorkDefRating: real('sp_work_def_rating'), // Space work defensive rating
+    spWorkNetRating: real('sp_work_net_rating'), // Space work net rating
+    spWorkOffRating: real('sp_work_off_rating'), // Space work offensive rating
+}, (table) => ({
+    playerSeasonUnique: unique('clutch_season_averages_player_season_unique').on(table.playerId, table.season),
+    playerIdIdx: index('clutch_season_averages_player_id_idx').on(table.playerId),
+    seasonIdx: index('clutch_season_averages_season_idx').on(table.season),
+}));
+/**
  * Standings table
  * Stores NBA team standings for each season
  */
@@ -290,6 +356,12 @@ export const standingsRelations = relations(standings, ({ one }) => ({
 export const seasonAveragesRelations = relations(seasonAverages, ({ one }) => ({
     player: one(players, {
         fields: [seasonAverages.playerId],
+        references: [players.id],
+    }),
+}));
+export const clutchSeasonAveragesRelations = relations(clutchSeasonAverages, ({ one }) => ({
+    player: one(players, {
+        fields: [clutchSeasonAverages.playerId],
         references: [players.id],
     }),
 }));

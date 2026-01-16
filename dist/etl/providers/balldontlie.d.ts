@@ -320,6 +320,20 @@ export declare function fetchStandings(season: number): Promise<ApiStanding[]>;
  */
 export declare function fetchSeasonAverages(season: number, seasonType?: string, playerIds?: number[]): Promise<ApiSeasonAverage[]>;
 /**
+ * Fetch clutch season averages for clutch/base stats
+ * Category: clutch, Type: base
+ * Can filter by player_ids array for efficiency
+ * Batches player_ids into chunks of 25 to avoid URL length limits
+ */
+export declare function fetchClutchSeasonAverages(season: number, seasonType?: string, playerIds?: number[]): Promise<ApiSeasonAverage[]>;
+/**
+ * Fetch advanced clutch season averages for clutch/advanced stats
+ * Category: clutch, Type: advanced
+ * Can filter by player_ids array for efficiency
+ * Batches player_ids into chunks of 25 to avoid URL length limits
+ */
+export declare function fetchAdvancedClutchSeasonAverages(season: number, seasonType?: string, playerIds?: number[]): Promise<ApiAdvancedSeasonAverage[]>;
+/**
  * Fetch advanced season averages for general/advanced stats
  * Category: general, Type: advanced
  * Can filter by player_ids array for efficiency

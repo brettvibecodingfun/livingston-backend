@@ -1,6 +1,6 @@
 import { db } from '../db/client.js';
-import { teams, players, games, boxScores, leaders, standings, seasonAverages } from '../db/schema.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage } from '../db/schema.js';
+import { teams, players, games, boxScores, leaders, standings, seasonAverages, clutchSeasonAverages } from '../db/schema.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage, NewClutchSeasonAverage } from '../db/schema.js';
 import { eq, sql, inArray, and } from 'drizzle-orm';
 
 /**
@@ -235,6 +235,78 @@ export async function upsertSeasonAverage(row: NewSeasonAverage): Promise<number
       },
     })
     .returning({ id: seasonAverages.id });
+
+  return result[0]!.id;
+}
+
+/**
+ * Upsert clutch season averages by (player_id, season)
+ * Uses ON CONFLICT DO UPDATE to merge fields, preserving existing values when new values are null
+ * This allows us to update base stats and advanced stats separately without overwriting each other
+ */
+export async function upsertClutchSeasonAverage(row: NewClutchSeasonAverage): Promise<number> {
+  const result = await db
+    .insert(clutchSeasonAverages)
+    .values(row)
+    .onConflictDoUpdate({
+      target: [clutchSeasonAverages.playerId, clutchSeasonAverages.season],
+      set: {
+        // Base stats - use COALESCE to preserve existing value if new value is null
+        gamesPlayed: sql`COALESCE(EXCLUDED.games_played, clutch_season_averages.games_played)`,
+        minutes: sql`COALESCE(EXCLUDED.minutes, clutch_season_averages.minutes)`,
+        points: sql`COALESCE(EXCLUDED.points, clutch_season_averages.points)`,
+        assists: sql`COALESCE(EXCLUDED.assists, clutch_season_averages.assists)`,
+        rebounds: sql`COALESCE(EXCLUDED.rebounds, clutch_season_averages.rebounds)`,
+        steals: sql`COALESCE(EXCLUDED.steals, clutch_season_averages.steals)`,
+        blocks: sql`COALESCE(EXCLUDED.blocks, clutch_season_averages.blocks)`,
+        turnovers: sql`COALESCE(EXCLUDED.turnovers, clutch_season_averages.turnovers)`,
+        fgm: sql`COALESCE(EXCLUDED.fgm, clutch_season_averages.fgm)`,
+        fga: sql`COALESCE(EXCLUDED.fga, clutch_season_averages.fga)`,
+        fgPct: sql`COALESCE(EXCLUDED.fg_pct, clutch_season_averages.fg_pct)`,
+        tpm: sql`COALESCE(EXCLUDED.tpm, clutch_season_averages.tpm)`,
+        tpa: sql`COALESCE(EXCLUDED.tpa, clutch_season_averages.tpa)`,
+        threePct: sql`COALESCE(EXCLUDED.three_pct, clutch_season_averages.three_pct)`,
+        ftm: sql`COALESCE(EXCLUDED.ftm, clutch_season_averages.ftm)`,
+        fta: sql`COALESCE(EXCLUDED.fta, clutch_season_averages.fta)`,
+        ftPct: sql`COALESCE(EXCLUDED.ft_pct, clutch_season_averages.ft_pct)`,
+        // Advanced stats - use COALESCE to preserve existing value if new value is null
+        losses: sql`COALESCE(EXCLUDED.losses, clutch_season_averages.losses)`,
+        wins: sql`COALESCE(EXCLUDED.wins, clutch_season_averages.wins)`,
+        age: sql`COALESCE(EXCLUDED.age, clutch_season_averages.age)`,
+        pie: sql`COALESCE(EXCLUDED.pie, clutch_season_averages.pie)`,
+        pace: sql`COALESCE(EXCLUDED.pace, clutch_season_averages.pace)`,
+        possessions: sql`COALESCE(EXCLUDED.possessions, clutch_season_averages.possessions)`,
+        winPct: sql`COALESCE(EXCLUDED.win_pct, clutch_season_averages.win_pct)`,
+        astTo: sql`COALESCE(EXCLUDED.ast_to, clutch_season_averages.ast_to)`,
+        ePace: sql`COALESCE(EXCLUDED.e_pace, clutch_season_averages.e_pace)`,
+        fgaPg: sql`COALESCE(EXCLUDED.fga_pg, clutch_season_averages.fga_pg)`,
+        fgmPg: sql`COALESCE(EXCLUDED.fgm_pg, clutch_season_averages.fgm_pg)`,
+        tsPct: sql`COALESCE(EXCLUDED.ts_pct, clutch_season_averages.ts_pct)`,
+        astPct: sql`COALESCE(EXCLUDED.ast_pct, clutch_season_averages.ast_pct)`,
+        efgPct: sql`COALESCE(EXCLUDED.efg_pct, clutch_season_averages.efg_pct)`,
+        rebPct: sql`COALESCE(EXCLUDED.reb_pct, clutch_season_averages.reb_pct)`,
+        usgPct: sql`COALESCE(EXCLUDED.usg_pct, clutch_season_averages.usg_pct)`,
+        drebPct: sql`COALESCE(EXCLUDED.dreb_pct, clutch_season_averages.dreb_pct)`,
+        orebPct: sql`COALESCE(EXCLUDED.oreb_pct, clutch_season_averages.oreb_pct)`,
+        astRatio: sql`COALESCE(EXCLUDED.ast_ratio, clutch_season_averages.ast_ratio)`,
+        eTovPct: sql`COALESCE(EXCLUDED.e_tov_pct, clutch_season_averages.e_tov_pct)`,
+        eUsgPct: sql`COALESCE(EXCLUDED.e_usg_pct, clutch_season_averages.e_usg_pct)`,
+        defRating: sql`COALESCE(EXCLUDED.def_rating, clutch_season_averages.def_rating)`,
+        netRating: sql`COALESCE(EXCLUDED.net_rating, clutch_season_averages.net_rating)`,
+        offRating: sql`COALESCE(EXCLUDED.off_rating, clutch_season_averages.off_rating)`,
+        pacePer40: sql`COALESCE(EXCLUDED.pace_per40, clutch_season_averages.pace_per40)`,
+        teamCount: sql`COALESCE(EXCLUDED.team_count, clutch_season_averages.team_count)`,
+        tmTovPct: sql`COALESCE(EXCLUDED.tm_tov_pct, clutch_season_averages.tm_tov_pct)`,
+        eDefRating: sql`COALESCE(EXCLUDED.e_def_rating, clutch_season_averages.e_def_rating)`,
+        eNetRating: sql`COALESCE(EXCLUDED.e_net_rating, clutch_season_averages.e_net_rating)`,
+        eOffRating: sql`COALESCE(EXCLUDED.e_off_rating, clutch_season_averages.e_off_rating)`,
+        spWorkPace: sql`COALESCE(EXCLUDED.sp_work_pace, clutch_season_averages.sp_work_pace)`,
+        spWorkDefRating: sql`COALESCE(EXCLUDED.sp_work_def_rating, clutch_season_averages.sp_work_def_rating)`,
+        spWorkNetRating: sql`COALESCE(EXCLUDED.sp_work_net_rating, clutch_season_averages.sp_work_net_rating)`,
+        spWorkOffRating: sql`COALESCE(EXCLUDED.sp_work_off_rating, clutch_season_averages.sp_work_off_rating)`,
+      },
+    })
+    .returning({ id: clutchSeasonAverages.id });
 
   return result[0]!.id;
 }

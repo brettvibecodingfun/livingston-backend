@@ -1,4 +1,4 @@
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage } from '../db/schema.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage, NewClutchSeasonAverage } from '../db/schema.js';
 /**
  * Upsert a team by api_id
  * ON CONFLICT (api_id) DO UPDATE
@@ -43,6 +43,12 @@ export declare function upsertStanding(row: NewStanding): Promise<number>;
  * This allows us to update base stats and advanced stats separately without overwriting each other
  */
 export declare function upsertSeasonAverage(row: NewSeasonAverage): Promise<number>;
+/**
+ * Upsert clutch season averages by (player_id, season)
+ * Uses ON CONFLICT DO UPDATE to merge fields, preserving existing values when new values are null
+ * This allows us to update base stats and advanced stats separately without overwriting each other
+ */
+export declare function upsertClutchSeasonAverage(row: NewClutchSeasonAverage): Promise<number>;
 /**
  * Get team database id by api_id
  */

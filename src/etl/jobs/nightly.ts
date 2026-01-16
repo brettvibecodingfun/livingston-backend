@@ -13,6 +13,8 @@ import {
   fetchStandings,
   fetchSeasonAverages,
   fetchAdvancedSeasonAverages,
+  fetchClutchSeasonAverages,
+  fetchAdvancedClutchSeasonAverages,
   fetchTeamContracts,
 } from '../providers/balldontlie.js';
 import {
@@ -32,6 +34,7 @@ import {
   upsertLeader,
   upsertStanding,
   upsertSeasonAverage,
+  upsertClutchSeasonAverage,
   buildTeamIdMap,
   buildPlayerIdMap,
   updatePlayerBaseSalary,
@@ -384,6 +387,80 @@ export async function runNightlyJob(options: { season?: number } = {}) {
       }
     }
     console.log(`  ✅ Upserted ${advancedSeasonAveragesCount} advanced season averages\n`);
+
+    // ========================================================================
+    // Step 7c: Load clutch season averages
+    // ========================================================================
+    console.log('📊 Step 7c: Loading clutch season averages...');
+    let clutchSeasonAveragesCount = 0;
+    
+    // Fetch clutch season averages for the same players
+    const apiClutchSeasonAverages = await retryWithBackoff(() => 
+      fetchClutchSeasonAverages(season, 'regular', playerApiIdsForAverages)
+    );
+    console.log(`  📥 Fetched ${apiClutchSeasonAverages.length} clutch season averages for season ${season}`);
+
+    for (const apiClutchSeasonAverage of apiClutchSeasonAverages) {
+      const playerApiId = apiClutchSeasonAverage.player?.id;
+      if (!playerApiId) {
+        console.warn(`  ⚠️  Clutch season average entry missing player.id, skipping`);
+        continue;
+      }
+
+      const playerId = playerIdMap.get(playerApiId);
+      if (!playerId) {
+        console.warn(`  ⚠️  Missing player FK for clutch season average player_id ${playerApiId}, skipping`);
+        continue;
+      }
+
+      try {
+        // Map clutch stats and upsert
+        const clutchSeasonAverageRow = mapSeasonAverageToDb(apiClutchSeasonAverage, playerId);
+        await upsertClutchSeasonAverage(clutchSeasonAverageRow);
+        clutchSeasonAveragesCount++;
+      } catch (error) {
+        console.warn(`  ⚠️  Error mapping clutch season average for player_id ${playerApiId}:`, error);
+        continue;
+      }
+    }
+    console.log(`  ✅ Upserted ${clutchSeasonAveragesCount} clutch season averages\n`);
+
+    // ========================================================================
+    // Step 7d: Load advanced clutch season averages
+    // ========================================================================
+    console.log('📊 Step 7d: Loading advanced clutch season averages...');
+    let advancedClutchSeasonAveragesCount = 0;
+    
+    // Fetch advanced clutch season averages for the same players
+    const apiAdvancedClutchSeasonAverages = await retryWithBackoff(() => 
+      fetchAdvancedClutchSeasonAverages(season, 'regular', playerApiIdsForAverages)
+    );
+    console.log(`  📥 Fetched ${apiAdvancedClutchSeasonAverages.length} advanced clutch season averages for season ${season}`);
+
+    for (const apiAdvancedClutchSeasonAverage of apiAdvancedClutchSeasonAverages) {
+      const playerApiId = apiAdvancedClutchSeasonAverage.player?.id;
+      if (!playerApiId) {
+        console.warn(`  ⚠️  Advanced clutch season average entry missing player.id, skipping`);
+        continue;
+      }
+
+      const playerId = playerIdMap.get(playerApiId);
+      if (!playerId) {
+        console.warn(`  ⚠️  Missing player FK for advanced clutch season average player_id ${playerApiId}, skipping`);
+        continue;
+      }
+
+      try {
+        // Map advanced clutch stats and upsert (will merge with existing base clutch stats)
+        const clutchSeasonAverageRow = mapSeasonAverageToDb(apiAdvancedClutchSeasonAverage, playerId);
+        await upsertClutchSeasonAverage(clutchSeasonAverageRow);
+        advancedClutchSeasonAveragesCount++;
+      } catch (error) {
+        console.warn(`  ⚠️  Error mapping advanced clutch season average for player_id ${playerApiId}:`, error);
+        continue;
+      }
+    }
+    console.log(`  ✅ Upserted ${advancedClutchSeasonAveragesCount} advanced clutch season averages\n`);
 
     // ========================================================================
     // Step 8: Load and update player contracts (base salary)

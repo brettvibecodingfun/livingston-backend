@@ -588,6 +588,170 @@ export async function fetchSeasonAverages(
 }
 
 /**
+ * Fetch clutch season averages for clutch/base stats
+ * Category: clutch, Type: base
+ * Can filter by player_ids array for efficiency
+ * Batches player_ids into chunks of 25 to avoid URL length limits
+ */
+export async function fetchClutchSeasonAverages(
+  season: number,
+  seasonType: string = 'regular',
+  playerIds?: number[]
+): Promise<ApiSeasonAverage[]> {
+  console.log(`📊 Fetching clutch season averages (clutch/base) for season ${season}...`);
+  
+  const params: Record<string, any> = {
+    season,
+    season_type: seasonType,
+    type: 'base',
+  };
+
+  // If no player IDs provided, fetch all (not recommended)
+  if (!playerIds || playerIds.length === 0) {
+    console.log(`  ⚠️  No player IDs provided, fetching all clutch season averages`);
+    const response = await fetchFromAPI(
+      '/season_averages/clutch',
+      z.object({ data: z.array(SeasonAverageSchema) }),
+      params
+    );
+    return response.data.filter(avg => avg.player?.id !== undefined && avg.player?.id !== null);
+  }
+
+  // Batch player IDs into chunks of 25 to avoid URL length limits
+  const BATCH_SIZE = 25;
+  const batches: number[][] = [];
+  for (let i = 0; i < playerIds.length; i += BATCH_SIZE) {
+    batches.push(playerIds.slice(i, i + BATCH_SIZE));
+  }
+
+  console.log(`  👥 Filtering by ${playerIds.length} player IDs (${batches.length} batches)`);
+
+  const allResults: ApiSeasonAverage[] = [];
+
+  // Fetch each batch
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i]!;
+    console.log(`  📦 Batch ${i + 1}/${batches.length}: ${batch.length} players`);
+
+    const batchParams = {
+      ...params,
+      player_ids: batch,
+    };
+
+    const response = await fetchFromAPI(
+      '/season_averages/clutch',
+      z.object({ data: z.array(SeasonAverageSchema) }),
+      batchParams
+    );
+
+    // Filter to only include entries with player.id and season (required for our use case)
+    const validResults = response.data.filter(
+      avg => 
+        avg.player?.id !== undefined && 
+        avg.player?.id !== null && 
+        avg.season !== undefined && 
+        avg.season !== null
+    );
+    
+    if (validResults.length < response.data.length) {
+      console.log(`    ⚠️  Filtered out ${response.data.length - validResults.length} entries missing player.id or season`);
+    }
+    
+    allResults.push(...validResults);
+
+    // Throttle between batches to respect rate limits
+    if (i < batches.length - 1) {
+      await throttle();
+    }
+  }
+
+  console.log(`  ✅ Fetched ${allResults.length} valid clutch season averages from ${batches.length} batches`);
+  return allResults;
+}
+
+/**
+ * Fetch advanced clutch season averages for clutch/advanced stats
+ * Category: clutch, Type: advanced
+ * Can filter by player_ids array for efficiency
+ * Batches player_ids into chunks of 25 to avoid URL length limits
+ */
+export async function fetchAdvancedClutchSeasonAverages(
+  season: number,
+  seasonType: string = 'regular',
+  playerIds?: number[]
+): Promise<ApiAdvancedSeasonAverage[]> {
+  console.log(`📊 Fetching advanced clutch season averages (clutch/advanced) for season ${season}...`);
+  
+  const params: Record<string, any> = {
+    season,
+    season_type: seasonType,
+    type: 'advanced',
+  };
+
+  // If no player IDs provided, fetch all (not recommended)
+  if (!playerIds || playerIds.length === 0) {
+    console.log(`  ⚠️  No player IDs provided, fetching all advanced clutch season averages`);
+    const response = await fetchFromAPI(
+      '/season_averages/clutch',
+      z.object({ data: z.array(AdvancedSeasonAverageSchema) }),
+      params
+    );
+    return response.data.filter(avg => avg.player?.id !== undefined && avg.player?.id !== null);
+  }
+
+  // Batch player IDs into chunks of 25 to avoid URL length limits
+  const BATCH_SIZE = 25;
+  const batches: number[][] = [];
+  for (let i = 0; i < playerIds.length; i += BATCH_SIZE) {
+    batches.push(playerIds.slice(i, i + BATCH_SIZE));
+  }
+
+  console.log(`  👥 Filtering by ${playerIds.length} player IDs (${batches.length} batches)`);
+
+  const allResults: ApiAdvancedSeasonAverage[] = [];
+
+  // Fetch each batch
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i]!;
+    console.log(`  📦 Batch ${i + 1}/${batches.length}: ${batch.length} players`);
+
+    const batchParams = {
+      ...params,
+      player_ids: batch,
+    };
+
+    const response = await fetchFromAPI(
+      '/season_averages/clutch',
+      z.object({ data: z.array(AdvancedSeasonAverageSchema) }),
+      batchParams
+    );
+
+    // Filter to only include entries with player.id and season (required for our use case)
+    const validResults = response.data.filter(
+      avg => 
+        avg.player?.id !== undefined && 
+        avg.player?.id !== null && 
+        avg.season !== undefined && 
+        avg.season !== null
+    );
+    
+    if (validResults.length < response.data.length) {
+      console.log(`    ⚠️  Filtered out ${response.data.length - validResults.length} entries missing player.id or season`);
+    }
+    
+    allResults.push(...validResults);
+
+    // Throttle between batches to respect rate limits
+    if (i < batches.length - 1) {
+      await throttle();
+    }
+  }
+
+  console.log(`  ✅ Fetched ${allResults.length} valid advanced clutch season averages from ${batches.length} batches`);
+  return allResults;
+}
+
+/**
  * Fetch advanced season averages for general/advanced stats
  * Category: general, Type: advanced
  * Can filter by player_ids array for efficiency
