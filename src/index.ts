@@ -5,6 +5,7 @@ import { swaggerSpec, getSwaggerHtml } from './swagger.js';
 import { handleHealth } from './routes/health.js';
 import { handleBogleGames } from './routes/bogle-games.js';
 import { handleBogleScores } from './routes/bogle-scores.js';
+import { handleGuessPlayerLeaderboard } from './routes/guess-player-leaderboard.js';
 
 // Load environment variables
 dotenv.config();
@@ -59,11 +60,16 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // Route to guess player leaderboard endpoints
+  if (await handleGuessPlayerLeaderboard(req, res)) {
+    return;
+  }
+
   // 404 for all other routes
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({
     error: 'Not Found',
-    message: 'Available endpoints: /health, /ping, POST /api/bogle/games, PATCH /api/bogle/games/:gameId, GET /api/bogle/games, GET /api/bogle/games?date=YYYY-MM-DD, POST /api/bogle/scores, DELETE /api/bogle/scores/:id, GET /api/bogle/scores?date=YYYY-MM-DD',
+    message: 'Available endpoints: /health, /ping, POST /api/bogle/games, PATCH /api/bogle/games/:gameId, GET /api/bogle/games, GET /api/bogle/games?date=YYYY-MM-DD, POST /api/bogle/scores, DELETE /api/bogle/scores/:id, GET /api/bogle/scores?date=YYYY-MM-DD, POST /api/guess-player-leaderboard, GET /api/guess-player-leaderboard/:id, GET /api/guess-player-leaderboard/player?playerIdSeason=246-2026, DELETE /api/guess-player-leaderboard/:id',
   }, null, 2));
 });
 
@@ -102,5 +108,9 @@ server.listen(PORT, () => {
   console.log(`🎮 POST /api/bogle/scores - Submit a score`);
   console.log(`🗑️  DELETE /api/bogle/scores/:id - Delete a score by ID`);
   console.log(`📊 GET /api/bogle/scores?date=YYYY-MM-DD - Get scores by date`);
+  console.log(`🎯 POST /api/guess-player-leaderboard - Submit a guess`);
+  console.log(`📋 GET /api/guess-player-leaderboard/:id - Get guess by ID`);
+  console.log(`👤 GET /api/guess-player-leaderboard/player?playerIdSeason=246-2026 - Get guesses by player`);
+  console.log(`🗑️  DELETE /api/guess-player-leaderboard/:id - Delete a guess by ID`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 });

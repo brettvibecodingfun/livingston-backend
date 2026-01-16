@@ -3357,6 +3357,121 @@ export declare const bogleScores: import("drizzle-orm/pg-core").PgTableWithColum
     };
     dialect: "pg";
 }>;
+/**
+ * Guess Player Leaderboard table
+ * Stores user guesses for player stats in a guessing game
+ * Each row represents a single guess for a specific player
+ * Player is identified by "{playerId}-{season}" format (e.g., "246-2026" for Nikola Jokic in 2026)
+ */
+export declare const guessPlayerLeaderboard: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "guess_player_leaderboard";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "guess_player_leaderboard";
+            dataType: "number";
+            columnType: "PgSerial";
+            data: number;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        userName: import("drizzle-orm/pg-core").PgColumn<{
+            name: "user_name";
+            tableName: "guess_player_leaderboard";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        score: import("drizzle-orm/pg-core").PgColumn<{
+            name: "score";
+            tableName: "guess_player_leaderboard";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        gameDate: import("drizzle-orm/pg-core").PgColumn<{
+            name: "game_date";
+            tableName: "guess_player_leaderboard";
+            dataType: "string";
+            columnType: "PgDateString";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        playerIdSeason: import("drizzle-orm/pg-core").PgColumn<{
+            name: "player_id_season";
+            tableName: "guess_player_leaderboard";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "created_at";
+            tableName: "guess_player_leaderboard";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
 export declare const teamsRelations: import("drizzle-orm").Relations<"teams", {
     players: import("drizzle-orm").Many<"players">;
     homeGames: import("drizzle-orm").Many<"games">;
@@ -3418,4 +3533,6 @@ export type BogleGame = typeof bogleGames.$inferSelect;
 export type NewBogleGame = typeof bogleGames.$inferInsert;
 export type BogleScore = typeof bogleScores.$inferSelect;
 export type NewBogleScore = typeof bogleScores.$inferInsert;
+export type GuessPlayerLeaderboard = typeof guessPlayerLeaderboard.$inferSelect;
+export type NewGuessPlayerLeaderboard = typeof guessPlayerLeaderboard.$inferInsert;
 //# sourceMappingURL=schema.d.ts.map

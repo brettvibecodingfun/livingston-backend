@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, date, real, unique, index, uniqueIndex, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, text, date, real, unique, index, uniqueIndex, timestamp, jsonb } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 /**
@@ -306,6 +306,26 @@ export const bogleScores = pgTable('bogle_scores', {
   gameScoreIdx: index('bogle_scores_game_score_idx').on(table.gameScore),
 }));
 
+/**
+ * Guess Player Leaderboard table
+ * Stores user guesses for player stats in a guessing game
+ * Each row represents a single guess for a specific player
+ * Player is identified by "{playerId}-{season}" format (e.g., "246-2026" for Nikola Jokic in 2026)
+ */
+export const guessPlayerLeaderboard = pgTable('guess_player_leaderboard', {
+  id: serial('id').primaryKey(),
+  userName: text('user_name').notNull(),
+  score: integer('score').notNull(),
+  gameDate: date('game_date').notNull(),
+  playerIdSeason: text('player_id_season').notNull(), // Format: "{playerId}-{season}" e.g., "246-2026"
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  gameDateIdx: index('guess_player_leaderboard_game_date_idx').on(table.gameDate),
+  userNameIdx: index('guess_player_leaderboard_user_name_idx').on(table.userName),
+  scoreIdx: index('guess_player_leaderboard_score_idx').on(table.score),
+  playerIdSeasonIdx: index('guess_player_leaderboard_player_id_season_idx').on(table.playerIdSeason),
+}));
+
 // ============================================================================
 // Relations (for Drizzle joins)
 // ============================================================================
@@ -429,3 +449,6 @@ export type NewBogleGame = typeof bogleGames.$inferInsert;
 
 export type BogleScore = typeof bogleScores.$inferSelect;
 export type NewBogleScore = typeof bogleScores.$inferInsert;
+
+export type GuessPlayerLeaderboard = typeof guessPlayerLeaderboard.$inferSelect;
+export type NewGuessPlayerLeaderboard = typeof guessPlayerLeaderboard.$inferInsert;
