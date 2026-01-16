@@ -25,6 +25,10 @@ export const swaggerSpec = {
       name: 'Bogle Scores',
       description: 'Endpoints for managing player scores',
     },
+    {
+      name: 'Guess Player Leaderboard',
+      description: 'Endpoints for managing player stats guessing game scores',
+    },
   ],
   paths: {
     '/health': {
@@ -423,6 +427,181 @@ export const swaggerSpec = {
         },
       },
     },
+    '/api/guess-player-leaderboard': {
+      post: {
+        tags: ['Guess Player Leaderboard'],
+        summary: 'Submit a player guess',
+        description: 'Submit a new player stats guessing game score',
+        security: [{ ApiKeyAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['userName', 'score', 'gameDate', 'playerIdSeason'],
+                properties: {
+                  userName: {
+                    type: 'string',
+                    example: 'player123',
+                    description: 'Username of the player',
+                  },
+                  score: {
+                    type: 'integer',
+                    minimum: 0,
+                    example: 95,
+                    description: 'Score achieved in the guessing game',
+                  },
+                  gameDate: {
+                    type: 'string',
+                    format: 'date',
+                    example: '2026-01-15',
+                    description: 'Date in YYYY-MM-DD format when the game was played',
+                  },
+                  playerIdSeason: {
+                    type: 'string',
+                    example: '246-2026',
+                    description: 'Player ID and season in format "playerId-season" (e.g., "246-2026" for Nikola Jokic in 2026 season)',
+                    pattern: '^\\d+-\\d{4}$',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Guess created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: { $ref: '#/components/schemas/GuessPlayerLeaderboard' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '401': { description: 'Unauthorized - Valid API key required', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
+      },
+    },
+    '/api/guess-player-leaderboard/{id}': {
+      get: {
+        tags: ['Guess Player Leaderboard'],
+        summary: 'Get a guess by ID',
+        description: 'Retrieve a specific player guess by its unique ID',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'ID of the guess to retrieve',
+            example: 1,
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: { $ref: '#/components/schemas/GuessPlayerLeaderboard' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '404': { description: 'Guess not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
+      },
+      delete: {
+        tags: ['Guess Player Leaderboard'],
+        summary: 'Delete a guess by ID',
+        description: 'Delete a player guess by its unique ID',
+        security: [{ ApiKeyAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'ID of the guess to delete',
+            example: 1,
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Guess deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Guess with ID 1 has been deleted' },
+                    deletedGuess: { $ref: '#/components/schemas/GuessPlayerLeaderboard' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '401': { description: 'Unauthorized - Valid API key required', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '404': { description: 'Guess not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
+      },
+    },
+    '/api/guess-player-leaderboard/player': {
+      get: {
+        tags: ['Guess Player Leaderboard'],
+        summary: 'Get guesses by player ID and season',
+        description: 'Get all guesses for a specific player ID and season, ordered by score (descending) then creation date (descending)',
+        parameters: [
+          {
+            name: 'playerIdSeason',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              example: '246-2026',
+              pattern: '^\\d+-\\d{4}$',
+            },
+            description: 'Player ID and season in format "playerId-season" (e.g., "246-2026" for Nikola Jokic in 2026 season)',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    playerIdSeason: { type: 'string', example: '246-2026' },
+                    count: { type: 'integer', example: 5 },
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/GuessPlayerLeaderboard' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -530,6 +709,44 @@ export const swaggerSpec = {
           },
         },
         required: ['id', 'gameId', 'username', 'gameScore', 'gameDate', 'gameQuestion', 'createdAt'],
+      },
+      GuessPlayerLeaderboard: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'integer',
+            description: 'Auto-incrementing guess ID',
+            example: 1,
+          },
+          userName: {
+            type: 'string',
+            description: "Player's username",
+            example: 'player123',
+          },
+          score: {
+            type: 'integer',
+            description: 'Score achieved in the guessing game',
+            example: 95,
+          },
+          gameDate: {
+            type: 'string',
+            format: 'date',
+            description: 'Date when the game was played in YYYY-MM-DD format',
+            example: '2026-01-15',
+          },
+          playerIdSeason: {
+            type: 'string',
+            description: 'Player ID and season in format "playerId-season"',
+            example: '246-2026',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Timestamp when the guess was created',
+            example: '2026-01-15T10:30:00.000Z',
+          },
+        },
+        required: ['id', 'userName', 'score', 'gameDate', 'playerIdSeason', 'createdAt'],
       },
       Error: {
         type: 'object',
