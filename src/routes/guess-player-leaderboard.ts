@@ -78,7 +78,7 @@ async function handlePostGuess(req: any, res: any): Promise<boolean> {
       // Create new guess record
       const newGuess: NewGuessPlayerLeaderboard = {
         userName: body.userName,
-        score: Math.round(body.score),
+        score: body.score,
         gameDate: body.gameDate,
         playerIdSeason: body.playerIdSeason,
       };
