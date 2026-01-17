@@ -315,7 +315,7 @@ export const bogleScores = pgTable('bogle_scores', {
 export const guessPlayerLeaderboard = pgTable('guess_player_leaderboard', {
   id: serial('id').primaryKey(),
   userName: text('user_name').notNull(),
-  score: integer('score').notNull(),
+  score: real('score').notNull(), // Changed from integer to real to support decimal scores
   gameDate: date('game_date').notNull(),
   playerIdSeason: text('player_id_season').notNull(), // Format: "{playerId}-{season}" e.g., "246-2026"
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

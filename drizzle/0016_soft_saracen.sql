@@ -1,0 +1,1 @@
+ALTER TABLE "guess_player_leaderboard" ALTER COLUMN "score" SET DATA TYPE real;

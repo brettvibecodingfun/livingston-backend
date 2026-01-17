@@ -1,6 +1,6 @@
 {
-  "id": "924fba19-9893-4a74-8811-a10af510333d",
-  "prevId": "4fbbe64a-e57c-4336-963f-abe66b0d44e7",
+  "id": "c9336872-baf2-41cf-99f7-b53c8f76ba7c",
+  "prevId": "924fba19-9893-4a74-8811-a10af510333d",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1035,7 +1035,7 @@
         },
         "score": {
           "name": "score",
-          "type": "integer",
+          "type": "real",
           "primaryKey": false,
           "notNull": true
         },

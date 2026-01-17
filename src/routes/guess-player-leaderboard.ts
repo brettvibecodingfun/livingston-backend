@@ -78,7 +78,7 @@ async function handlePostGuess(req: any, res: any): Promise<boolean> {
       // Create new guess record
       const newGuess: NewGuessPlayerLeaderboard = {
         userName: body.userName,
-        score: body.score,
+        score: parseFloat(body.score), // Parse as float to preserve decimals
         gameDate: body.gameDate,
         playerIdSeason: body.playerIdSeason,
       };

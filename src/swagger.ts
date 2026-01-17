@@ -447,10 +447,11 @@ export const swaggerSpec = {
                     description: 'Username of the player',
                   },
                   score: {
-                    type: 'integer',
+                    type: 'number',
+                    format: 'float',
                     minimum: 0,
-                    example: 95,
-                    description: 'Score achieved in the guessing game',
+                    example: 95.8,
+                    description: 'Score achieved in the guessing game (supports decimal values)',
                   },
                   gameDate: {
                     type: 'string',
@@ -724,9 +725,10 @@ export const swaggerSpec = {
             example: 'player123',
           },
           score: {
-            type: 'integer',
-            description: 'Score achieved in the guessing game',
-            example: 95,
+            type: 'number',
+            format: 'float',
+            description: 'Score achieved in the guessing game (supports decimal values)',
+            example: 95.8,
           },
           gameDate: {
             type: 'string',

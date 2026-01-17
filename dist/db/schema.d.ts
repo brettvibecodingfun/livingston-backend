@@ -3405,7 +3405,7 @@ export declare const guessPlayerLeaderboard: import("drizzle-orm/pg-core").PgTab
             name: "score";
             tableName: "guess_player_leaderboard";
             dataType: "number";
-            columnType: "PgInteger";
+            columnType: "PgReal";
             data: number;
             driverParam: string | number;
             notNull: true;
