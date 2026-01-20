@@ -169,6 +169,7 @@ declare const SeasonAverageSchema: z.ZodObject<{
         ftm: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
         fta: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
         ft_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        age: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
     }, z.core.$strip>;
 }, z.core.$loose>;
 declare const AdvancedSeasonAverageSchema: z.ZodObject<{
@@ -393,5 +394,11 @@ export declare function normalizeBoxScore(boxScore: ApiBoxScore): {
         division: string;
     };
 };
+/**
+ * Fetch historical season averages for all players in a season
+ * Uses the /nba/v1/season_averages/general endpoint
+ * Handles cursor-based pagination automatically
+ */
+export declare function fetchHistoricalSeasonAverages(season: number, seasonType?: string, perPage?: number): Promise<ApiSeasonAverage[]>;
 export {};
 //# sourceMappingURL=balldontlie.d.ts.map

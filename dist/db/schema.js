@@ -173,6 +173,41 @@ export const seasonAverages = pgTable('season_averages', {
     seasonIdx: index('season_averages_season_idx').on(table.season),
 }));
 /**
+ * Historical Season Averages table
+ * Stores historical season averages for NBA players (base stats only, no advanced stats)
+ * Includes player name, id, and season (season = API season + 1)
+ */
+export const historicalSeasonAverages = pgTable('historical_season_averages', {
+    id: serial('id').primaryKey(),
+    playerId: integer('player_id').references(() => players.id).notNull(),
+    playerName: text('player_name').notNull(), // Full name for historical reference
+    season: integer('season').notNull(), // Season = API season + 1 (e.g., API 2014 = 2015)
+    gamesPlayed: integer('games_played'),
+    minutes: real('minutes'),
+    points: real('points'),
+    assists: real('assists'),
+    rebounds: real('rebounds'),
+    steals: real('steals'),
+    blocks: real('blocks'),
+    turnovers: real('turnovers'),
+    fgm: real('fgm'), // Field goals made
+    fga: real('fga'), // Field goals attempted
+    fgPct: real('fg_pct'), // Field goal percentage
+    tpm: real('tpm'), // Three pointers made
+    tpa: real('tpa'), // Three pointers attempted
+    threePct: real('three_pct'), // Three point percentage
+    ftm: real('ftm'), // Free throws made
+    fta: real('fta'), // Free throws attempted
+    ftPct: real('ft_pct'), // Free throw percentage
+    // Additional base stats from historical API
+    age: integer('age') // age at the start of the season
+}, (table) => ({
+    playerSeasonUnique: unique('historical_season_averages_player_season_unique').on(table.playerId, table.season),
+    playerIdIdx: index('historical_season_averages_player_id_idx').on(table.playerId),
+    seasonIdx: index('historical_season_averages_season_idx').on(table.season),
+    playerNameIdx: index('historical_season_averages_player_name_idx').on(table.playerName),
+}));
+/**
  * Clutch Season Averages table
  * Stores clutch time season averages for NBA players
  * Same structure as season_averages but for clutch time situations
@@ -375,6 +410,12 @@ export const standingsRelations = relations(standings, ({ one }) => ({
 export const seasonAveragesRelations = relations(seasonAverages, ({ one }) => ({
     player: one(players, {
         fields: [seasonAverages.playerId],
+        references: [players.id],
+    }),
+}));
+export const historicalSeasonAveragesRelations = relations(historicalSeasonAverages, ({ one }) => ({
+    player: one(players, {
+        fields: [historicalSeasonAverages.playerId],
         references: [players.id],
     }),
 }));

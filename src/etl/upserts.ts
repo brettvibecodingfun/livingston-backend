@@ -1,6 +1,6 @@
 import { db } from '../db/client.js';
-import { teams, players, games, boxScores, leaders, standings, seasonAverages, clutchSeasonAverages } from '../db/schema.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage, NewClutchSeasonAverage } from '../db/schema.js';
+import { teams, players, games, boxScores, leaders, standings, seasonAverages, clutchSeasonAverages, historicalSeasonAverages } from '../db/schema.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage, NewClutchSeasonAverage, NewHistoricalSeasonAverage } from '../db/schema.js';
 import { eq, sql, inArray, and } from 'drizzle-orm';
 
 /**
@@ -400,4 +400,43 @@ export async function buildGameIdMap(apiIds: number[]): Promise<Map<number, numb
   const map = new Map<number, number>();
   results.forEach(row => map.set(row.apiId, row.id));
   return map;
+}
+
+/**
+ * Upsert a historical season average by playerId and season
+ * ON CONFLICT (player_id, season) DO UPDATE
+ * Uses COALESCE to preserve existing values if new value is null
+ * Returns the local database id
+ */
+export async function upsertHistoricalSeasonAverage(row: NewHistoricalSeasonAverage): Promise<number> {
+  const result = await db
+    .insert(historicalSeasonAverages)
+    .values(row)
+    .onConflictDoUpdate({
+      target: [historicalSeasonAverages.playerId, historicalSeasonAverages.season],
+      set: {
+        playerName: sql`EXCLUDED.player_name`,
+        gamesPlayed: sql`COALESCE(EXCLUDED.games_played, historical_season_averages.games_played)`,
+        minutes: sql`COALESCE(EXCLUDED.minutes, historical_season_averages.minutes)`,
+        points: sql`COALESCE(EXCLUDED.points, historical_season_averages.points)`,
+        assists: sql`COALESCE(EXCLUDED.assists, historical_season_averages.assists)`,
+        rebounds: sql`COALESCE(EXCLUDED.rebounds, historical_season_averages.rebounds)`,
+        steals: sql`COALESCE(EXCLUDED.steals, historical_season_averages.steals)`,
+        blocks: sql`COALESCE(EXCLUDED.blocks, historical_season_averages.blocks)`,
+        turnovers: sql`COALESCE(EXCLUDED.turnovers, historical_season_averages.turnovers)`,
+        fgm: sql`COALESCE(EXCLUDED.fgm, historical_season_averages.fgm)`,
+        fga: sql`COALESCE(EXCLUDED.fga, historical_season_averages.fga)`,
+        fgPct: sql`COALESCE(EXCLUDED.fg_pct, historical_season_averages.fg_pct)`,
+        tpm: sql`COALESCE(EXCLUDED.tpm, historical_season_averages.tpm)`,
+        tpa: sql`COALESCE(EXCLUDED.tpa, historical_season_averages.tpa)`,
+        threePct: sql`COALESCE(EXCLUDED.three_pct, historical_season_averages.three_pct)`,
+        ftm: sql`COALESCE(EXCLUDED.ftm, historical_season_averages.ftm)`,
+        fta: sql`COALESCE(EXCLUDED.fta, historical_season_averages.fta)`,
+        ftPct: sql`COALESCE(EXCLUDED.ft_pct, historical_season_averages.ft_pct)`,
+        age: sql`COALESCE(EXCLUDED.age, historical_season_averages.age)`,
+      },
+    })
+    .returning({ id: historicalSeasonAverages.id });
+
+  return result[0]!.id;
 }

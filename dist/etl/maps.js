@@ -190,4 +190,39 @@ export function mapSeasonAverageToDb(apiSeasonAverage, playerId) {
         spWorkOffRating: advancedStats.sp_work_off_rating ?? null,
     };
 }
+/**
+ * Map API historical season average to DB historical season average shape
+ * Note: playerId will be resolved via player api_id lookup
+ * Season is incremented by 1 (API 2014 -> DB 2015)
+ * Only includes base stats, no advanced stats or rankings
+ */
+export function mapHistoricalSeasonAverageToDb(apiSeasonAverage, playerId) {
+    const stats = apiSeasonAverage.stats || {};
+    const player = apiSeasonAverage.player || {};
+    // Construct full player name
+    const playerName = `${player.first_name || ''} ${player.last_name || ''}`.trim();
+    return {
+        playerId,
+        playerName,
+        season: apiSeasonAverage.season + 1, // Increment season by 1 (API 2014 -> DB 2015)
+        gamesPlayed: stats.gp ?? null,
+        minutes: stats.min ?? null,
+        points: stats.pts ?? null,
+        assists: stats.ast ?? null,
+        rebounds: stats.reb ?? null,
+        steals: stats.stl ?? null,
+        blocks: stats.blk ?? null,
+        turnovers: stats.tov ?? null,
+        fgm: stats.fgm ?? null,
+        fga: stats.fga ?? null,
+        fgPct: stats.fg_pct ?? null,
+        tpm: stats.fg3m ?? null,
+        tpa: stats.fg3a ?? null,
+        threePct: stats.fg3_pct ?? null,
+        ftm: stats.ftm ?? null,
+        fta: stats.fta ?? null,
+        ftPct: stats.ft_pct ?? null,
+        age: stats.age ?? null, // Age from stats (now explicitly in schema)
+    };
+}
 //# sourceMappingURL=maps.js.map

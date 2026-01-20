@@ -2,10 +2,11 @@ import { z } from 'zod';
 
 // Environment variables
 const BALLDONTLIE_BASE = process.env.BALLDONTLIE_BASE || 'https://api.balldontlie.io/v1';
-const BALLDONTLIE_KEY = process.env.BALLDONTLIE_KEY;
+const BALLDONTLIE_NBA_BASE = process.env.BALLDONTLIE_NBA_BASE || 'https://api.balldontlie.io/nba/v1';
 
-if (!BALLDONTLIE_KEY) {
-  console.warn('⚠️  BALLDONTLIE_KEY not set - API requests may fail');
+// Read BALLDONTLIE_KEY lazily (at function call time) to ensure dotenv has loaded
+function getBallDontLieKey(): string | undefined {
+  return process.env.BALLDONTLIE_KEY;
 }
 
 // ============================================================================
@@ -182,6 +183,7 @@ const SeasonAverageSchema = z.object({
     ftm: z.number().nullable().optional(),
     fta: z.number().nullable().optional(),
     ft_pct: z.number().nullable().optional(),
+    age: z.number().nullable().optional(), // Age at start of season (from historical API)
   }),
 }).passthrough(); // Allow extra fields we don't know about
 
@@ -328,6 +330,58 @@ async function throttle(): Promise<void> {
 }
 
 /**
+ * Make HTTP request to BallDontLie API (NBA v1 endpoint)
+ */
+async function fetchFromNBAAPI<T>(
+  endpoint: string,
+  schema: z.ZodSchema<T>,
+  params: Record<string, any> = {}
+): Promise<T> {
+  const url = new URL(`${BALLDONTLIE_NBA_BASE}${endpoint}`);
+  
+  // Add query parameters
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if ((key === 'team_ids' || key === 'dates' || key === 'game_ids' || key === 'player_ids') && Array.isArray(value)) {
+        // Special handling for array parameters: ?team_ids[]=1&team_ids[]=2 or ?dates[]=2024-01-01 or ?game_ids[]=123 or ?player_ids[]=1
+        value.forEach(item => url.searchParams.append(`${key}[]`, item.toString()));
+      } else {
+        url.searchParams.append(key, value.toString());
+      }
+    }
+  });
+
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+  };
+  
+  const apiKey = getBallDontLieKey();
+  if (apiKey) {
+    headers['Authorization'] = apiKey;
+  }
+
+  console.log(`📡 GET ${url.pathname}${url.search}`);
+
+  const response = await fetch(url.toString(), { headers });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API request failed: ${response.status} ${response.statusText}\n${errorText}`);
+  }
+
+  const data = await response.json();
+  
+  // Validate with Zod and throw on invalid response
+  const parsed = schema.safeParse(data);
+  if (!parsed.success) {
+    console.error('❌ Invalid API response:', parsed.error);
+    throw new Error(`Invalid API response: ${parsed.error.message}`);
+  }
+  
+  return parsed.data;
+}
+
+/**
  * Make HTTP request to BallDontLie API
  */
 async function fetchFromAPI<T>(
@@ -353,8 +407,9 @@ async function fetchFromAPI<T>(
     'Accept': 'application/json',
   };
 
-  if (BALLDONTLIE_KEY) {
-    headers['Authorization'] = BALLDONTLIE_KEY;
+  const apiKey = getBallDontLieKey();
+  if (apiKey) {
+    headers['Authorization'] = apiKey;
   }
 
   console.log(`📡 GET ${url.pathname}${url.search}`);
@@ -911,4 +966,71 @@ export function normalizeBoxScore(boxScore: ApiBoxScore) {
     pf: normalizeNumber(boxScore.pf),
     pts: normalizeNumber(boxScore.pts),
   };
+}
+
+/**
+ * Fetch historical season averages for all players in a season
+ * Uses the /nba/v1/season_averages/general endpoint
+ * Handles cursor-based pagination automatically
+ */
+export async function fetchHistoricalSeasonAverages(
+  season: number,
+  seasonType: string = 'regular',
+  perPage: number = 100
+): Promise<ApiSeasonAverage[]> {
+  console.log(`📊 Fetching historical season averages for season ${season} (will be stored as ${season + 1})...`);
+  
+  const results: ApiSeasonAverage[] = [];
+  let cursor: number | null | undefined = undefined;
+  let pageCount = 0;
+
+  do {
+    const params: Record<string, any> = {
+      season,
+      season_type: seasonType,
+      type: 'base',
+      per_page: perPage,
+    };
+
+    // Add cursor if we have one (don't include cursor parameter on first request)
+    if (cursor !== undefined && cursor !== null) {
+      params.cursor = cursor;
+    }
+
+    try {
+      const response = await fetchFromNBAAPI(
+        '/season_averages/general',
+        z.object({
+          data: z.array(SeasonAverageSchema),
+          meta: z.object({
+            per_page: z.number(),
+            next_cursor: z.number().nullable().optional(),
+            total_count: z.number().optional(),
+          }),
+        }),
+        params
+      );
+
+      const validAverages = response.data.filter(
+        avg => avg.player?.id !== undefined && avg.player?.id !== null
+      );
+      
+      results.push(...validAverages);
+      cursor = response.meta.next_cursor ?? null;
+      pageCount++;
+      
+      console.log(`  📄 Request ${pageCount}: ${validAverages.length} items (total: ${results.length})`);
+
+      // Throttle between requests if there's more data
+      if (cursor) {
+        await throttle();
+      }
+    } catch (error) {
+      console.error(`  ❌ Error fetching request ${pageCount + 1}:`, error);
+      throw error;
+    }
+  } while (cursor !== null && cursor !== undefined);
+
+  console.log(`  ✅ Fetched ${results.length} total historical season averages`);
+  return results;
 }

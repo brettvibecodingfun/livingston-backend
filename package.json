@@ -15,6 +15,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "etl:nightly": "npm install && npm run build && node dist/cli/nightly.js",
+    "etl:historical": "npm run build && node dist/cli/historical.js",
     "etl:inc": "ts-node --project tsconfig.node.json src/cli/incremental.ts",
     "query:warriors": "node query-warriors.js",
     "query:ppg": "node query-ppg-leaders.js",
