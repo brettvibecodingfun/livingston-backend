@@ -2,6 +2,11 @@
  * Clustering ETL Job
  * Runs K-means clustering on historical player data by age
  * Creates clusters for ages 19-40 with dynamic splitting for large clusters
+ * 
+ * Clustering parameters:
+ * - Ages 19-35: 20 initial clusters (increased for more granularity)
+ * - Ages 36-40: 10 initial clusters (increased for more granularity)
+ * - Max cluster size: 25 players (reduced from 50 for more specificity)
  */
 
 import dotenv from 'dotenv';
@@ -28,14 +33,15 @@ export interface ClusteringJobOptions {
 
 /**
  * Get the number of clusters for a given age
- * Ages 19-35: 10 clusters
- * Ages 36-40: 5 clusters
+ * Increased for more granular clustering
+ * Ages 19-35: 20 clusters (increased from 10)
+ * Ages 36-40: 10 clusters (increased from 5)
  */
 function getClusterCount(age: number): number {
   if (age >= 19 && age <= 35) {
-    return 10;
+    return 20; // Increased from 10 for more granular clustering
   } else if (age >= 36 && age <= 40) {
-    return 5;
+    return 10; // Increased from 5 for more granular clustering
   } else {
     throw new Error(`Invalid age: ${age}. Must be between 19 and 40.`);
   }
@@ -208,7 +214,7 @@ export async function runClusteringJob(
   const {
     minGames = 20,
     minMinutes = 15,
-    maxClusterSize = 50,
+    maxClusterSize = 25, // Reduced from 50 for more granular clusters
     currentSeason = 2026,
   } = options;
 

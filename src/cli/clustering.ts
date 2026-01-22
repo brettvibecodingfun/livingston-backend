@@ -50,7 +50,7 @@ function parseArgs(): {
       console.log('Options:');
       console.log('  --min-games <number>        Minimum games played (default: 20)');
       console.log('  --min-minutes <number>      Minimum minutes per game (default: 15)');
-      console.log('  --max-cluster-size <num>   Maximum players per cluster before splitting (default: 50)');
+      console.log('  --max-cluster-size <num>   Maximum players per cluster before splitting (default: 25)');
       console.log('  --current-season <year>     Current season year (default: 2026)');
       console.log('  --help, -h                 Show this help message');
       process.exit(0);
