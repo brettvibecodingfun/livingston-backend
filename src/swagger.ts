@@ -610,30 +610,22 @@ export const swaggerSpec = {
     '/api/clusters': {
       get: {
         tags: ['Clusters'],
-        summary: 'Get clusters by player name or get all players in a cluster',
-        description: 'Two modes: 1) Get all cluster assignments for a player by name (use name parameter). 2) Get all players in a specific cluster by age and cluster number (use age and clusterNumber parameters). Returns clusters with player stats for historical comparison (season 2026). All responses include the 6 clustering features: points, assists, rebounds, fgPct, threePct, ftPct.',
+        summary: 'Get all players in a cluster by age and cluster number',
+        description: 'Returns all players in a specific cluster by age and cluster number. Includes players from all seasons (not just 2026). All responses include the 6 clustering features: points, assists, rebounds, fgPct, threePct, ftPct.',
         parameters: [
-          {
-            name: 'name',
-            in: 'query',
-            required: false,
-            description: 'Player name (partial match, case-insensitive). Use this to get all clusters for a specific player.',
-            schema: { type: 'string' },
-            example: 'Anthony Edwards',
-          },
           {
             name: 'age',
             in: 'query',
-            required: false,
-            description: 'Player age (19-40). Use with clusterNumber to get all players in a specific cluster.',
+            required: true,
+            description: 'Player age (19-40)',
             schema: { type: 'integer', minimum: 19, maximum: 40 },
             example: 22,
           },
           {
             name: 'clusterNumber',
             in: 'query',
-            required: false,
-            description: 'Cluster number within the age group (any non-negative integer). Use with age to get all players in a specific cluster. Returns 404 if the cluster does not exist.',
+            required: true,
+            description: 'Cluster number within the age group (any non-negative integer). Returns 404 if the cluster does not exist.',
             schema: { type: 'integer', minimum: 0 },
             example: 3,
           },
@@ -644,51 +636,72 @@ export const swaggerSpec = {
             content: {
               'application/json': {
                 schema: {
-                  oneOf: [
-                    {
-                      type: 'object',
-                      description: 'Response when querying by player name',
-                      properties: {
-                        success: { type: 'boolean', example: true },
-                        player: {
-                          type: 'object',
-                          properties: {
-                            id: { type: 'integer', example: 123 },
-                            fullName: { type: 'string', example: 'Anthony Edwards' },
-                            position: { type: 'string', nullable: true, example: 'SG' },
-                            teamId: { type: 'integer', nullable: true, example: 15 },
-                          },
-                        },
-                        season: { type: 'integer', example: 2026 },
-                        count: { type: 'integer', example: 1 },
-                        data: {
-                          type: 'array',
-                          items: { $ref: '#/components/schemas/PlayerCluster' },
-                        },
-                      },
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    age: { type: 'integer', example: 22 },
+                    clusterNumber: { type: 'integer', example: 3 },
+                    count: { type: 'integer', example: 45 },
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/ClusterPlayer' },
                     },
-                    {
-                      type: 'object',
-                      description: 'Response when querying by age and clusterNumber',
-                      properties: {
-                        success: { type: 'boolean', example: true },
-                        age: { type: 'integer', example: 22 },
-                        clusterNumber: { type: 'integer', example: 3 },
-                        season: { type: 'integer', example: 2026 },
-                        count: { type: 'integer', example: 45 },
-                        data: {
-                          type: 'array',
-                          items: { $ref: '#/components/schemas/ClusterPlayer' },
-                        },
-                      },
-                    },
-                  ],
+                  },
                 },
               },
             },
           },
           '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          '404': { description: 'Not Found - Player not found (when using name parameter) or Cluster does not exist (when using age and clusterNumber parameters)', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '404': { description: 'Cluster does not exist', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
+      },
+    },
+    '/api/clusters/player': {
+      get: {
+        tags: ['Clusters'],
+        summary: 'Get all clusters for a player by name',
+        description: 'Returns all cluster assignments for a player by their name (season 2026). All responses include the 6 clustering features: points, assists, rebounds, fgPct, threePct, ftPct.',
+        parameters: [
+          {
+            name: 'name',
+            in: 'query',
+            required: true,
+            description: 'Player name (partial match, case-insensitive)',
+            schema: { type: 'string' },
+            example: 'Anthony Edwards',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    player: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer', example: 123 },
+                        fullName: { type: 'string', example: 'Anthony Edwards' },
+                        position: { type: 'string', nullable: true, example: 'SG' },
+                        teamId: { type: 'integer', nullable: true, example: 15 },
+                      },
+                    },
+                    season: { type: 'integer', example: 2026 },
+                    count: { type: 'integer', example: 1 },
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/PlayerCluster' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '404': { description: 'Player not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
         },
       },
     },

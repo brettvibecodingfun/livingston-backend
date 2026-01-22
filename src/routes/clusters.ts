@@ -4,10 +4,11 @@ import { eq, like, sql, and } from 'drizzle-orm';
 
 /**
  * GET /api/clusters?age=<age>&clusterNumber=<clusterNumber> - Get all players in a cluster
- * Returns all players in a specific cluster by age and cluster number (season 2026)
+ * Returns all players in a specific cluster by age and cluster number (all seasons, not just 2026)
  */
 async function handleGetClusterPlayers(req: any, res: any): Promise<boolean> {
-  if (req.url?.startsWith('/api/clusters') && req.method === 'GET') {
+  // Match /api/clusters with age and clusterNumber query params (not /api/clusters/player)
+  if (req.url?.startsWith('/api/clusters') && !req.url.startsWith('/api/clusters/player') && req.method === 'GET') {
     try {
       const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const ageParam = url.searchParams.get('age');
@@ -69,8 +70,8 @@ async function handleGetClusterPlayers(req: any, res: any): Promise<boolean> {
           .where(
             and(
               eq(playerClusters.age, age),
-              eq(playerClusters.clusterNumber, clusterNumber),
-              eq(playerClusters.season, 2026)
+              eq(playerClusters.clusterNumber, clusterNumber)
+              // Removed season filter to return all players from all seasons
             )
           )
           .orderBy(sql`COALESCE(${seasonAverages.points}, ${historicalSeasonAverages.points}) DESC NULLS LAST`);
@@ -80,7 +81,7 @@ async function handleGetClusterPlayers(req: any, res: any): Promise<boolean> {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             error: 'Not Found',
-            message: `No cluster found for age ${age} and clusterNumber ${clusterNumber} in season 2026`,
+            message: `No cluster found for age ${age} and clusterNumber ${clusterNumber}`,
           }, null, 2));
           return true;
         }
@@ -90,7 +91,6 @@ async function handleGetClusterPlayers(req: any, res: any): Promise<boolean> {
           success: true,
           age,
           clusterNumber,
-          season: 2026,
           count: clusterPlayers.length,
           data: clusterPlayers,
         }, null, 2));
@@ -110,11 +110,12 @@ async function handleGetClusterPlayers(req: any, res: any): Promise<boolean> {
 }
 
 /**
- * GET /api/clusters?name=<playerName> - Get all clusters for a player by name
+ * GET /api/clusters/player?name=<playerName> - Get all clusters for a player by name
  * Returns clusters for season 2026 (interpreted from season_averages season 2025)
  */
 async function handleGetClustersByName(req: any, res: any): Promise<boolean> {
-  if (req.url?.startsWith('/api/clusters') && req.method === 'GET') {
+  // Match /api/clusters/player with name query param
+  if (req.url?.startsWith('/api/clusters/player') && req.method === 'GET') {
     try {
       const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const playerNameParam = url.searchParams.get('name');
@@ -123,7 +124,7 @@ async function handleGetClustersByName(req: any, res: any): Promise<boolean> {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           error: 'Bad Request',
-          message: 'name query parameter is required (for player clusters). Alternatively, use age and clusterNumber to get all players in a cluster.',
+          message: 'name query parameter is required',
         }, null, 2));
         return true;
       }
@@ -208,10 +209,10 @@ async function handleGetClustersByName(req: any, res: any): Promise<boolean> {
  * Returns true if the request was handled, false otherwise
  */
 export async function handleClusters(req: any, res: any): Promise<boolean> {
-  // Check cluster players route first (age + clusterNumber)
-  if (await handleGetClusterPlayers(req, res)) {
+  // Check player clusters route first (more specific path: /api/clusters/player)
+  if (await handleGetClustersByName(req, res)) {
     return true;
   }
-  // Then check player clusters route (name)
-  return await handleGetClustersByName(req, res);
+  // Then check cluster players route (age + clusterNumber on /api/clusters)
+  return await handleGetClusterPlayers(req, res);
 }

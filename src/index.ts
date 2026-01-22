@@ -75,7 +75,7 @@ const server = createServer(async (req, res) => {
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({
     error: 'Not Found',
-    message: 'Available endpoints: /health, /ping, POST /api/bogle/games, PATCH /api/bogle/games/:gameId, GET /api/bogle/games, GET /api/bogle/games?date=YYYY-MM-DD, POST /api/bogle/scores, DELETE /api/bogle/scores/:id, GET /api/bogle/scores?date=YYYY-MM-DD, POST /api/guess-player-leaderboard, GET /api/guess-player-leaderboard/:id, GET /api/guess-player-leaderboard/player?playerIdSeason=246-2026, DELETE /api/guess-player-leaderboard/:id, GET /api/clusters?name=PlayerName',
+    message: 'Available endpoints: /health, /ping, POST /api/bogle/games, PATCH /api/bogle/games/:gameId, GET /api/bogle/games, GET /api/bogle/games?date=YYYY-MM-DD, POST /api/bogle/scores, DELETE /api/bogle/scores/:id, GET /api/bogle/scores?date=YYYY-MM-DD, POST /api/guess-player-leaderboard, GET /api/guess-player-leaderboard/:id, GET /api/guess-player-leaderboard/player?playerIdSeason=246-2026, DELETE /api/guess-player-leaderboard/:id, GET /api/clusters?age=24&clusterNumber=4, GET /api/clusters/player?name=PlayerName',
   }, null, 2));
 });
 
