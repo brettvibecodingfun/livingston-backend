@@ -181,7 +181,7 @@ export function clusterPlayers(
  */
 export function shouldSplitCluster(
   clusterSize: number,
-  maxClusterSize: number = 25 // Reduced default from 50 for more granular clusters
+  maxClusterSize: number = 12 // Reduced default from 50 for more granular clusters
 ): boolean {
   return clusterSize > maxClusterSize;
 }
@@ -192,7 +192,7 @@ export function shouldSplitCluster(
  */
 export function splitCluster(
   players: PlayerDataPoint[],
-  maxClusterSize: number = 25 // Reduced default from 50 for more granular clusters
+  maxClusterSize: number = 12 // Reduced default from 50 for more granular clusters
 ): number[] {
   if (players.length <= maxClusterSize) {
     // No need to split, all players in cluster 0
@@ -255,7 +255,7 @@ export function splitCluster(
 export function processClustersWithSplitting(
   dataPoints: PlayerDataPoint[],
   initialK: number,
-  maxClusterSize: number = 25 // Reduced default from 50 for more granular clusters
+  maxClusterSize: number = 12 // Reduced default from 50 for more granular clusters
 ): Map<number, number> {
   if (dataPoints.length === 0) {
     return new Map();

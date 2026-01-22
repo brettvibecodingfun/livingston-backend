@@ -214,7 +214,7 @@ export async function runClusteringJob(
   const {
     minGames = 20,
     minMinutes = 15,
-    maxClusterSize = 25, // Reduced from 50 for more granular clusters
+    maxClusterSize = 12, // Reduced from 50 for more granular clusters
     currentSeason = 2026,
   } = options;
 
