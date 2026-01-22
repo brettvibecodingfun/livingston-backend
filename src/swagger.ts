@@ -610,16 +610,32 @@ export const swaggerSpec = {
     '/api/clusters': {
       get: {
         tags: ['Clusters'],
-        summary: 'Get clusters for a player by name',
-        description: 'Retrieve all cluster assignments for a player by their name (season 2026). Returns clusters with player stats for historical comparison.',
+        summary: 'Get clusters by player name or get all players in a cluster',
+        description: 'Two modes: 1) Get all cluster assignments for a player by name (use name parameter). 2) Get all players in a specific cluster by age and cluster number (use age and clusterNumber parameters). Returns clusters with player stats for historical comparison (season 2026). All responses include the 6 clustering features: points, assists, rebounds, fgPct, threePct, ftPct.',
         parameters: [
           {
             name: 'name',
             in: 'query',
-            required: true,
-            description: 'Player name (partial match, case-insensitive)',
+            required: false,
+            description: 'Player name (partial match, case-insensitive). Use this to get all clusters for a specific player.',
             schema: { type: 'string' },
             example: 'Anthony Edwards',
+          },
+          {
+            name: 'age',
+            in: 'query',
+            required: false,
+            description: 'Player age (19-40). Use with clusterNumber to get all players in a specific cluster.',
+            schema: { type: 'integer', minimum: 19, maximum: 40 },
+            example: 22,
+          },
+          {
+            name: 'clusterNumber',
+            in: 'query',
+            required: false,
+            description: 'Cluster number within the age group (any non-negative integer). Use with age to get all players in a specific cluster. Returns 404 if the cluster does not exist.',
+            schema: { type: 'integer', minimum: 0 },
+            example: 3,
           },
         ],
         responses: {
@@ -628,31 +644,51 @@ export const swaggerSpec = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  properties: {
-                    success: { type: 'boolean', example: true },
-                    player: {
+                  oneOf: [
+                    {
                       type: 'object',
+                      description: 'Response when querying by player name',
                       properties: {
-                        id: { type: 'integer', example: 123 },
-                        fullName: { type: 'string', example: 'Anthony Edwards' },
-                        position: { type: 'string', nullable: true, example: 'SG' },
-                        teamId: { type: 'integer', nullable: true, example: 15 },
+                        success: { type: 'boolean', example: true },
+                        player: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'integer', example: 123 },
+                            fullName: { type: 'string', example: 'Anthony Edwards' },
+                            position: { type: 'string', nullable: true, example: 'SG' },
+                            teamId: { type: 'integer', nullable: true, example: 15 },
+                          },
+                        },
+                        season: { type: 'integer', example: 2026 },
+                        count: { type: 'integer', example: 1 },
+                        data: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/PlayerCluster' },
+                        },
                       },
                     },
-                    season: { type: 'integer', example: 2026 },
-                    count: { type: 'integer', example: 1 },
-                    data: {
-                      type: 'array',
-                      items: { $ref: '#/components/schemas/PlayerCluster' },
+                    {
+                      type: 'object',
+                      description: 'Response when querying by age and clusterNumber',
+                      properties: {
+                        success: { type: 'boolean', example: true },
+                        age: { type: 'integer', example: 22 },
+                        clusterNumber: { type: 'integer', example: 3 },
+                        season: { type: 'integer', example: 2026 },
+                        count: { type: 'integer', example: 45 },
+                        data: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/ClusterPlayer' },
+                        },
+                      },
                     },
-                  },
+                  ],
                 },
               },
             },
           },
           '400': { description: 'Bad Request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          '404': { description: 'Player Not Found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '404': { description: 'Not Found - Player not found (when using name parameter) or Cluster does not exist (when using age and clusterNumber parameters)', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
         },
       },
     },
@@ -805,6 +841,7 @@ export const swaggerSpec = {
       },
       PlayerCluster: {
         type: 'object',
+        description: 'Player cluster assignment with all 6 clustering features: points, assists, rebounds (counting stats) and fgPct, threePct, ftPct (shooting percentages)',
         properties: {
           id: {
             type: 'integer',
@@ -818,7 +855,7 @@ export const swaggerSpec = {
           },
           clusterNumber: {
             type: 'integer',
-            description: 'Cluster ID within this age (0-9 for ages 19-35, 0-4 for ages 36-40)',
+            description: 'Cluster ID within this age (any non-negative integer)',
             example: 3,
           },
           playerId: {
@@ -840,42 +877,170 @@ export const swaggerSpec = {
             type: 'number',
             format: 'float',
             nullable: true,
-            description: 'Points per game',
+            description: 'Points per game (clustering feature - counting stat)',
             example: 25.5,
           },
           assists: {
             type: 'number',
             format: 'float',
             nullable: true,
-            description: 'Assists per game',
+            description: 'Assists per game (clustering feature - counting stat)',
             example: 5.2,
           },
           rebounds: {
             type: 'number',
             format: 'float',
             nullable: true,
-            description: 'Rebounds per game',
+            description: 'Rebounds per game (clustering feature - counting stat)',
             example: 5.8,
           },
           fgPct: {
             type: 'number',
             format: 'float',
             nullable: true,
-            description: 'Field goal percentage',
+            description: 'Field goal percentage (clustering feature - shooting percentage)',
             example: 0.456,
           },
           threePct: {
             type: 'number',
             format: 'float',
             nullable: true,
-            description: 'Three-point percentage',
+            description: 'Three-point percentage (clustering feature - shooting percentage)',
             example: 0.358,
           },
           ftPct: {
             type: 'number',
             format: 'float',
             nullable: true,
-            description: 'Free throw percentage',
+            description: 'Free throw percentage (clustering feature - shooting percentage)',
+            example: 0.842,
+          },
+          gamesPlayed: {
+            type: 'integer',
+            nullable: true,
+            description: 'Games played',
+            example: 72,
+          },
+          minutes: {
+            type: 'number',
+            format: 'float',
+            nullable: true,
+            description: 'Minutes per game',
+            example: 35.2,
+          },
+          historicalSeasonAverageId: {
+            type: 'integer',
+            nullable: true,
+            description: 'Reference to historical season average (null for current season)',
+            example: null,
+          },
+          seasonAverageId: {
+            type: 'integer',
+            nullable: true,
+            description: 'Reference to current season average (null for historical)',
+            example: 456,
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Timestamp when the cluster was created',
+            example: '2026-01-15T10:30:00.000Z',
+          },
+        },
+        required: ['id', 'age', 'clusterNumber', 'playerId', 'season', 'playerName', 'createdAt'],
+      },
+      ClusterPlayer: {
+        type: 'object',
+        description: 'Player in a cluster with full player information and all 6 clustering features: points, assists, rebounds (counting stats) and fgPct, threePct, ftPct (shooting percentages)',
+        properties: {
+          id: {
+            type: 'integer',
+            description: 'Cluster assignment ID',
+            example: 1234,
+          },
+          age: {
+            type: 'integer',
+            description: 'Player age (19-40)',
+            example: 22,
+          },
+          clusterNumber: {
+            type: 'integer',
+            description: 'Cluster ID within this age (any non-negative integer)',
+            example: 3,
+          },
+          playerId: {
+            type: 'integer',
+            description: 'Player ID',
+            example: 123,
+          },
+          season: {
+            type: 'integer',
+            description: 'Season year (2026 for current season)',
+            example: 2026,
+          },
+          playerName: {
+            type: 'string',
+            description: 'Full player name',
+            example: 'Anthony Edwards',
+          },
+          playerFullName: {
+            type: 'string',
+            nullable: true,
+            description: 'Player full name from players table',
+            example: 'Anthony Edwards',
+          },
+          playerPosition: {
+            type: 'string',
+            nullable: true,
+            description: 'Player position',
+            example: 'SG',
+          },
+          playerTeamId: {
+            type: 'integer',
+            nullable: true,
+            description: 'Player team ID',
+            example: 15,
+          },
+          points: {
+            type: 'number',
+            format: 'float',
+            nullable: true,
+            description: 'Points per game (clustering feature - counting stat)',
+            example: 25.5,
+          },
+          assists: {
+            type: 'number',
+            format: 'float',
+            nullable: true,
+            description: 'Assists per game (clustering feature - counting stat)',
+            example: 5.2,
+          },
+          rebounds: {
+            type: 'number',
+            format: 'float',
+            nullable: true,
+            description: 'Rebounds per game (clustering feature - counting stat)',
+            example: 5.8,
+          },
+          fgPct: {
+            type: 'number',
+            format: 'float',
+            nullable: true,
+            description: 'Field goal percentage (clustering feature - shooting percentage)',
+            example: 0.456,
+          },
+          threePct: {
+            type: 'number',
+            format: 'float',
+            nullable: true,
+            description: 'Three-point percentage (clustering feature - shooting percentage)',
+            example: 0.358,
+          },
+          ftPct: {
+            type: 'number',
+            format: 'float',
+            nullable: true,
+            description: 'Free throw percentage (clustering feature - shooting percentage)',
             example: 0.842,
           },
           gamesPlayed: {

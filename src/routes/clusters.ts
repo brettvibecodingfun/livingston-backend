@@ -1,6 +1,113 @@
 import { db } from '../db/client.js';
 import { playerClusters, players, seasonAverages, historicalSeasonAverages } from '../db/schema.js';
-import { eq, like, sql } from 'drizzle-orm';
+import { eq, like, sql, and } from 'drizzle-orm';
+
+/**
+ * GET /api/clusters?age=<age>&clusterNumber=<clusterNumber> - Get all players in a cluster
+ * Returns all players in a specific cluster by age and cluster number (season 2026)
+ */
+async function handleGetClusterPlayers(req: any, res: any): Promise<boolean> {
+  if (req.url?.startsWith('/api/clusters') && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+      const ageParam = url.searchParams.get('age');
+      const clusterNumberParam = url.searchParams.get('clusterNumber');
+
+      // Check if this is the cluster players route (has age and clusterNumber)
+      if (ageParam && clusterNumberParam) {
+        const age = parseInt(ageParam, 10);
+        const clusterNumber = parseInt(clusterNumberParam, 10);
+
+        if (isNaN(age) || age < 19 || age > 40) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Bad Request',
+            message: 'age must be a number between 19 and 40',
+          }, null, 2));
+          return true;
+        }
+
+        if (isNaN(clusterNumber)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Bad Request',
+            message: 'clusterNumber must be a valid number',
+          }, null, 2));
+          return true;
+        }
+
+        // Get all players in this cluster (no limit - returns all players)
+        const clusterPlayers = await db
+          .select({
+            id: playerClusters.id,
+            age: playerClusters.age,
+            clusterNumber: playerClusters.clusterNumber,
+            playerId: playerClusters.playerId,
+            season: playerClusters.season,
+            playerName: playerClusters.playerName,
+            // Player info
+            playerFullName: players.fullName,
+            playerPosition: players.position,
+            playerTeamId: players.teamId,
+            // Stats from either season_averages or historical_season_averages
+            points: sql<number | null>`COALESCE(${seasonAverages.points}, ${historicalSeasonAverages.points})`,
+            assists: sql<number | null>`COALESCE(${seasonAverages.assists}, ${historicalSeasonAverages.assists})`,
+            rebounds: sql<number | null>`COALESCE(${seasonAverages.rebounds}, ${historicalSeasonAverages.rebounds})`,
+            fgPct: sql<number | null>`COALESCE(${seasonAverages.fgPct}, ${historicalSeasonAverages.fgPct})`,
+            threePct: sql<number | null>`COALESCE(${seasonAverages.threePct}, ${historicalSeasonAverages.threePct})`,
+            ftPct: sql<number | null>`COALESCE(${seasonAverages.ftPct}, ${historicalSeasonAverages.ftPct})`,
+            gamesPlayed: sql<number | null>`COALESCE(${seasonAverages.gamesPlayed}, ${historicalSeasonAverages.gamesPlayed})`,
+            minutes: sql<number | null>`COALESCE(${seasonAverages.minutes}, ${historicalSeasonAverages.minutes})`,
+            historicalSeasonAverageId: playerClusters.historicalSeasonAverageId,
+            seasonAverageId: playerClusters.seasonAverageId,
+            createdAt: playerClusters.createdAt,
+          })
+          .from(playerClusters)
+          .leftJoin(players, eq(playerClusters.playerId, players.id))
+          .leftJoin(seasonAverages, eq(playerClusters.seasonAverageId, seasonAverages.id))
+          .leftJoin(historicalSeasonAverages, eq(playerClusters.historicalSeasonAverageId, historicalSeasonAverages.id))
+          .where(
+            and(
+              eq(playerClusters.age, age),
+              eq(playerClusters.clusterNumber, clusterNumber),
+              eq(playerClusters.season, 2026)
+            )
+          )
+          .orderBy(sql`COALESCE(${seasonAverages.points}, ${historicalSeasonAverages.points}) DESC NULLS LAST`);
+
+        // Check if cluster exists - return 404 if no players found
+        if (clusterPlayers.length === 0) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Not Found',
+            message: `No cluster found for age ${age} and clusterNumber ${clusterNumber} in season 2026`,
+          }, null, 2));
+          return true;
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          age,
+          clusterNumber,
+          season: 2026,
+          count: clusterPlayers.length,
+          data: clusterPlayers,
+        }, null, 2));
+        return true;
+      }
+    } catch (error) {
+      console.error('Error fetching cluster players:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }, null, 2));
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * GET /api/clusters?name=<playerName> - Get all clusters for a player by name
@@ -16,7 +123,7 @@ async function handleGetClustersByName(req: any, res: any): Promise<boolean> {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           error: 'Bad Request',
-          message: 'name query parameter is required',
+          message: 'name query parameter is required (for player clusters). Alternatively, use age and clusterNumber to get all players in a cluster.',
         }, null, 2));
         return true;
       }
@@ -101,5 +208,10 @@ async function handleGetClustersByName(req: any, res: any): Promise<boolean> {
  * Returns true if the request was handled, false otherwise
  */
 export async function handleClusters(req: any, res: any): Promise<boolean> {
+  // Check cluster players route first (age + clusterNumber)
+  if (await handleGetClusterPlayers(req, res)) {
+    return true;
+  }
+  // Then check player clusters route (name)
   return await handleGetClustersByName(req, res);
 }
