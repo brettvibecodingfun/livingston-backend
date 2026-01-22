@@ -425,6 +425,29 @@ export const clutchSeasonAveragesRelations = relations(clutchSeasonAverages, ({ 
         references: [players.id],
     }),
 }));
+/**
+ * Player Clusters table
+ * Stores K-means cluster assignments for players by age
+ * Used for finding historical player comparisons
+ */
+export const playerClusters = pgTable('player_clusters', {
+    id: serial('id').primaryKey(),
+    age: integer('age').notNull(), // Player age (19-40)
+    clusterNumber: integer('cluster_number').notNull(), // Cluster ID within this age (0-9 for ages 19-35, 0-4 for ages 36-40)
+    playerId: integer('player_id').references(() => players.id).notNull(),
+    season: integer('season').notNull(), // Season year
+    playerName: text('player_name').notNull(), // Full name for historical reference
+    historicalSeasonAverageId: integer('historical_season_average_id').references(() => historicalSeasonAverages.id), // Reference to historical season average (null for current season)
+    seasonAverageId: integer('season_average_id').references(() => seasonAverages.id), // Reference to current season average (null for historical)
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+    ageClusterIdx: index('player_clusters_age_cluster_idx').on(table.age, table.clusterNumber),
+    playerIdIdx: index('player_clusters_player_id_idx').on(table.playerId),
+    seasonIdx: index('player_clusters_season_idx').on(table.season),
+    ageIdx: index('player_clusters_age_idx').on(table.age),
+    // Unique constraint: a player-season-age can only be in one cluster
+    playerSeasonAgeUnique: unique('player_clusters_player_season_age_unique').on(table.playerId, table.season, table.age),
+}));
 export const bogleGamesRelations = relations(bogleGames, ({ many }) => ({
     scores: many(bogleScores),
 }));

@@ -16,9 +16,11 @@
     "db:studio": "drizzle-kit studio",
     "etl:nightly": "npm install && npm run build && node dist/cli/nightly.js",
     "etl:historical": "node dist/cli/historical.js",
+    "etl:clustering": "npm run build && node dist/cli/clustering.js",
     "etl:inc": "ts-node --project tsconfig.node.json src/cli/incremental.ts",
     "query:warriors": "node query-warriors.js",
     "query:ppg": "node query-ppg-leaders.js",
+    "test:clustering": "npm run build && node test-clustering.js",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
@@ -44,6 +46,7 @@
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.5",
     "drizzle-orm": "^0.44.6",
+    "ml-kmeans": "^4.0.0",
     "pg": "^8.16.3",
     "zod": "^4.1.12"
   }

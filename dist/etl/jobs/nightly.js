@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { db, pool } from '../../db/client.js';
 import { players, teams } from '../../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { fetchTeams, fetchPlayers, fetchGamesByDate, fetchBoxScoresByGame, fetchLeaders, fetchStandings, fetchSeasonAverages, fetchAdvancedSeasonAverages, fetchClutchSeasonAverages, fetchAdvancedClutchSeasonAverages, fetchTeamContracts, } from '../providers/balldontlie.js';
 import { mapTeamToDb, mapPlayerToDb, mapGameToDb, mapBoxScoreToDb, mapLeaderToDb, mapStandingToDb, mapSeasonAverageToDb, } from '../maps.js';
 import { upsertTeam, upsertPlayer, upsertGame, upsertBoxScore, upsertLeader, upsertStanding, upsertSeasonAverage, upsertClutchSeasonAverage, buildTeamIdMap, buildPlayerIdMap, updatePlayerBaseSalary, } from '../upserts.js';
@@ -57,22 +57,28 @@ export async function runNightlyJob(options = {}) {
     let standingsCount = 0;
     let seasonAveragesCount = 0;
     let contractsCount = 0;
+    // Current NBA team IDs (1-30) - used throughout the job
+    const currentNbaTeamIds = new Set(Array.from({ length: 30 }, (_, i) => i + 1));
+    const currentNbaTeamIdsArray = Array.from({ length: 30 }, (_, i) => i + 1);
     try {
         // ========================================================================
-        // Step 1: Load and upsert teams
+        // Step 1: Load and upsert teams (only current NBA teams: IDs 1-30)
         // ========================================================================
         console.log('🏀 Step 1: Loading teams...');
         const apiTeams = await retryWithBackoff(() => fetchTeams());
         console.log(`  📥 Fetched ${apiTeams.length} teams`);
+        // Filter to only current NBA teams (IDs 1-30)
+        const filteredTeams = apiTeams.filter(team => currentNbaTeamIds.has(team.id));
+        console.log(`  🔍 Filtered to ${filteredTeams.length} current NBA teams (IDs 1-30)`);
         console.log('  💾 Upserting teams...');
-        for (const apiTeam of apiTeams) {
+        for (const apiTeam of filteredTeams) {
             const teamRow = mapTeamToDb(apiTeam);
             await upsertTeam(teamRow);
             teamsCount++;
         }
         console.log(`  ✅ Upserted ${teamsCount} teams\n`);
-        // Build team ID map for FK resolution
-        const teamApiIds = apiTeams.map(t => t.id);
+        // Build team ID map for FK resolution (only for teams 1-30)
+        const teamApiIds = filteredTeams.map(t => t.id);
         const teamIdMap = await buildTeamIdMap(teamApiIds);
         // ========================================================================
         // Step 2: Load and upsert players (current NBA rosters only)
@@ -80,10 +86,8 @@ export async function runNightlyJob(options = {}) {
         console.log('👥 Step 2: Loading current NBA players...');
         const season = options.season || 2025;
         console.log(`  📅 Season: ${season}`);
-        // Current NBA team IDs (1-30)
-        const currentNbaTeamIds = Array.from({ length: 30 }, (_, i) => i + 1);
-        console.log(`  🏀 Filtering to current NBA teams: ${currentNbaTeamIds.length} teams`);
-        const apiPlayers = await retryWithBackoff(() => fetchPlayers({ season, teamIds: currentNbaTeamIds }));
+        console.log(`  🏀 Filtering to current NBA teams: ${currentNbaTeamIdsArray.length} teams`);
+        const apiPlayers = await retryWithBackoff(() => fetchPlayers({ season, teamIds: currentNbaTeamIdsArray }));
         console.log(`  📥 Fetched ${apiPlayers.length} players from current NBA rosters`);
         console.log('  💾 Upserting players...');
         for (const apiPlayer of apiPlayers) {
@@ -114,9 +118,12 @@ export async function runNightlyJob(options = {}) {
             console.log('  ℹ️  No games found for yesterday (off-day)\n');
         }
         else {
+            // Filter games to only include those with both teams in IDs 1-30
+            const filteredGames = apiGames.filter(game => currentNbaTeamIds.has(game.home_team.id) && currentNbaTeamIds.has(game.visitor_team.id));
+            console.log(`  🔍 Filtered to ${filteredGames.length} games with current NBA teams (IDs 1-30)`);
             console.log('  💾 Upserting games...');
             const gameIdMap = new Map();
-            for (const apiGame of apiGames) {
+            for (const apiGame of filteredGames) {
                 // Resolve team FKs
                 const homeTeamId = teamIdMap.get(apiGame.home_team.id);
                 const awayTeamId = teamIdMap.get(apiGame.visitor_team.id);
@@ -134,7 +141,7 @@ export async function runNightlyJob(options = {}) {
             // Step 4: Load and upsert box scores for each game
             // ======================================================================
             console.log('📊 Step 4: Loading box scores...');
-            for (const apiGame of apiGames) {
+            for (const apiGame of filteredGames) {
                 const gameDbId = gameIdMap.get(apiGame.id);
                 if (!gameDbId)
                     continue;
@@ -181,13 +188,16 @@ export async function runNightlyJob(options = {}) {
         }
         console.log(`  ✅ Total leaders: ${leadersCount}\n`);
         // ========================================================================
-        // Step 6: Load and upsert team standings
+        // Step 6: Load and upsert team standings (only for teams 1-30)
         // ========================================================================
         console.log('📈 Step 6: Loading season standings...');
         const standingsSeason = 2025;
         const apiStandings = await retryWithBackoff(() => fetchStandings(standingsSeason));
         console.log(`  📥 Fetched ${apiStandings.length} standings rows for season ${standingsSeason}`);
-        for (const apiStanding of apiStandings) {
+        // Filter standings to only current NBA teams (IDs 1-30)
+        const filteredStandings = apiStandings.filter(standing => currentNbaTeamIds.has(standing.team.id));
+        console.log(`  🔍 Filtered to ${filteredStandings.length} standings for current NBA teams (IDs 1-30)`);
+        for (const apiStanding of filteredStandings) {
             const teamId = teamIdMap.get(apiStanding.team.id);
             if (!teamId) {
                 console.warn(`  ⚠️  Missing team FK for standing ${apiStanding.team.name}, skipping`);
@@ -348,20 +358,21 @@ export async function runNightlyJob(options = {}) {
         }
         console.log(`  ✅ Upserted ${advancedClutchSeasonAveragesCount} advanced clutch season averages\n`);
         // ========================================================================
-        // Step 8: Load and update player contracts (base salary)
+        // Step 8: Load and update player contracts (base salary) - only teams 1-30
         // ========================================================================
         console.log('💰 Step 8: Loading player contracts...');
-        // Get all teams from database to fetch contracts for each
+        // Get only current NBA teams (IDs 1-30) from database to fetch contracts
         const allTeamsInDb = await db
             .select({ apiId: teams.apiId, id: teams.id })
-            .from(teams);
-        console.log(`  📋 Found ${allTeamsInDb.length} teams in database`);
+            .from(teams)
+            .where(sql `${teams.apiId} <= 30`);
+        console.log(`  📋 Found ${allTeamsInDb.length} current NBA teams in database (IDs 1-30)`);
         // Build team API ID to DB ID map
         const teamApiIdToDbId = new Map();
         for (const team of allTeamsInDb) {
             teamApiIdToDbId.set(team.apiId, team.id);
         }
-        // Fetch contracts for each team
+        // Fetch contracts for each team (only teams 1-30)
         for (const team of allTeamsInDb) {
             try {
                 console.log(`  📥 Fetching contracts for team API ID ${team.apiId}...`);

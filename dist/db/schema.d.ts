@@ -3896,6 +3896,171 @@ export declare const historicalSeasonAveragesRelations: import("drizzle-orm").Re
 export declare const clutchSeasonAveragesRelations: import("drizzle-orm").Relations<"clutch_season_averages", {
     player: import("drizzle-orm").One<"players", true>;
 }>;
+/**
+ * Player Clusters table
+ * Stores K-means cluster assignments for players by age
+ * Used for finding historical player comparisons
+ */
+export declare const playerClusters: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "player_clusters";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "player_clusters";
+            dataType: "number";
+            columnType: "PgSerial";
+            data: number;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        age: import("drizzle-orm/pg-core").PgColumn<{
+            name: "age";
+            tableName: "player_clusters";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        clusterNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "cluster_number";
+            tableName: "player_clusters";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        playerId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "player_id";
+            tableName: "player_clusters";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        season: import("drizzle-orm/pg-core").PgColumn<{
+            name: "season";
+            tableName: "player_clusters";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        playerName: import("drizzle-orm/pg-core").PgColumn<{
+            name: "player_name";
+            tableName: "player_clusters";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        historicalSeasonAverageId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "historical_season_average_id";
+            tableName: "player_clusters";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        seasonAverageId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "season_average_id";
+            tableName: "player_clusters";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "created_at";
+            tableName: "player_clusters";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
 export declare const bogleGamesRelations: import("drizzle-orm").Relations<"bogle_games", {
     scores: import("drizzle-orm").Many<"bogle_scores">;
 }>;
@@ -3926,4 +4091,6 @@ export type BogleScore = typeof bogleScores.$inferSelect;
 export type NewBogleScore = typeof bogleScores.$inferInsert;
 export type GuessPlayerLeaderboard = typeof guessPlayerLeaderboard.$inferSelect;
 export type NewGuessPlayerLeaderboard = typeof guessPlayerLeaderboard.$inferInsert;
+export type PlayerCluster = typeof playerClusters.$inferSelect;
+export type NewPlayerCluster = typeof playerClusters.$inferInsert;
 //# sourceMappingURL=schema.d.ts.map

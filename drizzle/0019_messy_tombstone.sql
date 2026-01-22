@@ -1,0 +1,2 @@
+ALTER TABLE "player_clusters" ADD COLUMN "season_average_id" integer;--> statement-breakpoint
+ALTER TABLE "player_clusters" ADD CONSTRAINT "player_clusters_season_average_id_season_averages_id_fk" FOREIGN KEY ("season_average_id") REFERENCES "public"."season_averages"("id") ON DELETE no action ON UPDATE no action;
