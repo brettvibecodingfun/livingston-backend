@@ -4,9 +4,10 @@
  * Creates clusters for ages 19-40 with dynamic splitting for large clusters
  * 
  * Clustering parameters:
- * - Ages 19-35: 20 initial clusters (increased for more granularity)
- * - Ages 36-40: 10 initial clusters (increased for more granularity)
- * - Max cluster size: 25 players (reduced from 50 for more specificity)
+ * - Ages 19-20: 10 initial clusters (fewer players at these ages)
+ * - Ages 21-35: 20 initial clusters (more players, need more granularity)
+ * - Ages 36-40: 10 initial clusters (fewer players at older ages)
+ * - Max cluster size: 12 players (reduced for more specificity)
  */
 
 import dotenv from 'dotenv';
@@ -33,15 +34,18 @@ export interface ClusteringJobOptions {
 
 /**
  * Get the number of clusters for a given age
- * Increased for more granular clustering
- * Ages 19-35: 20 clusters (increased from 10)
- * Ages 36-40: 10 clusters (increased from 5)
+ * Adjusted based on typical player count per age group
+ * Ages 19-20: 10 clusters (fewer players at these ages)
+ * Ages 21-35: 20 clusters (more players, need more granularity)
+ * Ages 36-40: 10 clusters (fewer players at older ages)
  */
 function getClusterCount(age: number): number {
-  if (age >= 19 && age <= 35) {
-    return 20; // Increased from 10 for more granular clustering
+  if (age >= 19 && age <= 20) {
+    return 10; // Fewer clusters for younger ages with fewer players
+  } else if (age >= 21 && age <= 35) {
+    return 20; // More clusters for prime ages with many players
   } else if (age >= 36 && age <= 40) {
-    return 10; // Increased from 5 for more granular clustering
+    return 10; // Fewer clusters for older ages with fewer players
   } else {
     throw new Error(`Invalid age: ${age}. Must be between 19 and 40.`);
   }
