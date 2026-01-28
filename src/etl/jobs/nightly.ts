@@ -16,6 +16,8 @@ import {
   fetchClutchSeasonAverages,
   fetchAdvancedClutchSeasonAverages,
   fetchTeamContracts,
+  fetchTeamSeasonAverages,
+  fetchAdvancedTeamSeasonAverages,
 } from '../providers/balldontlie.js';
 import {
   mapTeamToDb,
@@ -25,6 +27,7 @@ import {
   mapLeaderToDb,
   mapStandingToDb,
   mapSeasonAverageToDb,
+  mapTeamSeasonAverageToDb,
 } from '../maps.js';
 import {
   upsertTeam,
@@ -38,6 +41,7 @@ import {
   buildTeamIdMap,
   buildPlayerIdMap,
   updatePlayerBaseSalary,
+  upsertTeamSeasonAverage,
 } from '../upserts.js';
 
 dotenv.config();
@@ -304,31 +308,31 @@ export async function runNightlyJob(options: { season?: number } = {}) {
 
     // ========================================================================
     // Step 7: Load and upsert season averages (includes shooting percentages)
+    // Only fetch for ACTIVE players (from Step 2) - older players already have stats saved
     // ========================================================================
-    console.log('📊 Step 7: Loading season averages...');
+    console.log('📊 Step 7: Loading season averages for ACTIVE players only...');
     
-    // Get ALL player API IDs from database for season averages fetch
-    // (not just the ones we fetched in Step 2, to ensure we get averages for all players)
-    console.log('  🔍 Fetching all player API IDs from database...');
+    // Use only active player API IDs from Step 2 (not all players in database)
+    // Older/inactive players already have their stats saved from historical ETL
+    const activePlayerApiIds = playerApiIds; // From Step 2
+    console.log(`  🔍 Using ${activePlayerApiIds.length} active player API IDs from Step 2`);
+    
+    // Rebuild player ID map to include ALL players in database for FK resolution
+    // This ensures we can match season averages even if a player wasn't fetched in Step 2
     const allPlayersInDb = await db
       .select({ apiId: players.apiId })
       .from(players);
-    const playerApiIdsForAverages = allPlayersInDb.map(p => p.apiId);
-    console.log(`  📊 Found ${playerApiIdsForAverages.length} total players in database`);
+    const allPlayerApiIds = allPlayersInDb.map(p => p.apiId);
+    playerIdMap = await buildPlayerIdMap(allPlayerApiIds);
     
-    // Rebuild player ID map to include ALL players in database (not just newly fetched ones)
-    // This ensures we can match season averages for any player, including ones that weren't
-    // fetched in Step 2 (e.g., rookies or players not on current NBA teams)
-    playerIdMap = await buildPlayerIdMap(playerApiIdsForAverages);
-    
-    // Fetch season averages filtered by ALL player IDs in database
+    // Fetch season averages filtered by ACTIVE player IDs only
     const apiSeasonAverages = await retryWithBackoff(() => 
-      fetchSeasonAverages(season, 'regular', playerApiIdsForAverages)
+      fetchSeasonAverages(season, 'regular', activePlayerApiIds)
     );
     console.log(`  📥 Fetched ${apiSeasonAverages.length} season averages for season ${season}`);
 
     // Track which player IDs we requested vs which we got back
-    const requestedPlayerIds = new Set(playerApiIdsForAverages);
+    const requestedPlayerIds = new Set(activePlayerApiIds);
     const receivedPlayerIds = new Set<number>();
     
     for (const apiSeasonAverage of apiSeasonAverages) {
@@ -370,14 +374,14 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     console.log(`  ✅ Upserted ${seasonAveragesCount} season averages\n`);
 
     // ========================================================================
-    // Step 7b: Load advanced season averages
+    // Step 7b: Load advanced season averages (ACTIVE players only)
     // ========================================================================
-    console.log('📊 Step 7b: Loading advanced season averages...');
+    console.log('📊 Step 7b: Loading advanced season averages for ACTIVE players only...');
     let advancedSeasonAveragesCount = 0;
     
-    // Fetch advanced season averages for the same players
+    // Fetch advanced season averages for active players only
     const apiAdvancedSeasonAverages = await retryWithBackoff(() => 
-      fetchAdvancedSeasonAverages(season, 'regular', playerApiIdsForAverages)
+      fetchAdvancedSeasonAverages(season, 'regular', activePlayerApiIds)
     );
     console.log(`  📥 Fetched ${apiAdvancedSeasonAverages.length} advanced season averages for season ${season}`);
 
@@ -407,14 +411,14 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     console.log(`  ✅ Upserted ${advancedSeasonAveragesCount} advanced season averages\n`);
 
     // ========================================================================
-    // Step 7c: Load clutch season averages
+    // Step 7c: Load clutch season averages (ACTIVE players only)
     // ========================================================================
-    console.log('📊 Step 7c: Loading clutch season averages...');
+    console.log('📊 Step 7c: Loading clutch season averages for ACTIVE players only...');
     let clutchSeasonAveragesCount = 0;
     
-    // Fetch clutch season averages for the same players
+    // Fetch clutch season averages for active players only
     const apiClutchSeasonAverages = await retryWithBackoff(() => 
-      fetchClutchSeasonAverages(season, 'regular', playerApiIdsForAverages)
+      fetchClutchSeasonAverages(season, 'regular', activePlayerApiIds)
     );
     console.log(`  📥 Fetched ${apiClutchSeasonAverages.length} clutch season averages for season ${season}`);
 
@@ -444,14 +448,14 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     console.log(`  ✅ Upserted ${clutchSeasonAveragesCount} clutch season averages\n`);
 
     // ========================================================================
-    // Step 7d: Load advanced clutch season averages
+    // Step 7d: Load advanced clutch season averages (ACTIVE players only)
     // ========================================================================
-    console.log('📊 Step 7d: Loading advanced clutch season averages...');
+    console.log('📊 Step 7d: Loading advanced clutch season averages for ACTIVE players only...');
     let advancedClutchSeasonAveragesCount = 0;
     
-    // Fetch advanced clutch season averages for the same players
+    // Fetch advanced clutch season averages for active players only
     const apiAdvancedClutchSeasonAverages = await retryWithBackoff(() => 
-      fetchAdvancedClutchSeasonAverages(season, 'regular', playerApiIdsForAverages)
+      fetchAdvancedClutchSeasonAverages(season, 'regular', activePlayerApiIds)
     );
     console.log(`  📥 Fetched ${apiAdvancedClutchSeasonAverages.length} advanced clutch season averages for season ${season}`);
 
@@ -537,6 +541,92 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     console.log(`  ✅ Total contracts processed: ${contractsCount}\n`);
 
     // ========================================================================
+    // Step 9: Load and upsert team season averages (base stats) (only for teams 1-30)
+    // ========================================================================
+    console.log('📊 Step 9: Loading team season averages (base)...');
+    let teamSeasonAveragesCount = 0;
+    
+    // Get all teams from database (only current NBA teams: IDs 1-30)
+    const allTeamsForAverages = await db
+      .select({ apiId: teams.apiId, id: teams.id })
+      .from(teams)
+      .where(sql`${teams.apiId} <= 30`);
+    const teamApiIdsForAverages = allTeamsForAverages.map(t => t.apiId);
+    
+    // Build team API ID to DB ID map
+    const teamApiIdToDbIdForAverages = new Map<number, number>();
+    for (const team of allTeamsForAverages) {
+      teamApiIdToDbIdForAverages.set(team.apiId, team.id);
+    }
+    
+    // Fetch base team season averages
+    const apiTeamSeasonAverages = await retryWithBackoff(() => 
+      fetchTeamSeasonAverages(season, 'regular', teamApiIdsForAverages)
+    );
+    console.log(`  📥 Fetched ${apiTeamSeasonAverages.length} team season averages (base) for season ${season}`);
+    
+    for (const apiTeamAverage of apiTeamSeasonAverages) {
+      const teamApiId = apiTeamAverage.team?.id;
+      if (!teamApiId) {
+        console.warn(`  ⚠️  Team season average entry missing team.id, skipping`);
+        continue;
+      }
+      
+      const teamId = teamApiIdToDbIdForAverages.get(teamApiId);
+      if (!teamId) {
+        console.warn(`  ⚠️  Missing team FK for team season average team_id ${teamApiId}, skipping`);
+        continue;
+      }
+      
+      try {
+        const teamAverageRow = mapTeamSeasonAverageToDb(apiTeamAverage, teamId);
+        await upsertTeamSeasonAverage(teamAverageRow);
+        teamSeasonAveragesCount++;
+      } catch (error) {
+        console.warn(`  ⚠️  Error mapping team season average for team_id ${teamApiId}:`, error);
+        continue;
+      }
+    }
+    console.log(`  ✅ Upserted ${teamSeasonAveragesCount} team season averages (base)\n`);
+
+    // ========================================================================
+    // Step 9b: Load advanced team season averages (only for teams 1-30)
+    // ========================================================================
+    console.log('📊 Step 9b: Loading advanced team season averages...');
+    let advancedTeamSeasonAveragesCount = 0;
+    
+    // Fetch advanced team season averages
+    const apiAdvancedTeamSeasonAverages = await retryWithBackoff(() => 
+      fetchAdvancedTeamSeasonAverages(season, 'regular', teamApiIdsForAverages)
+    );
+    console.log(`  📥 Fetched ${apiAdvancedTeamSeasonAverages.length} advanced team season averages for season ${season}`);
+    
+    for (const apiAdvancedTeamAverage of apiAdvancedTeamSeasonAverages) {
+      const teamApiId = apiAdvancedTeamAverage.team?.id;
+      if (!teamApiId) {
+        console.warn(`  ⚠️  Advanced team season average entry missing team.id, skipping`);
+        continue;
+      }
+      
+      const teamId = teamApiIdToDbIdForAverages.get(teamApiId);
+      if (!teamId) {
+        console.warn(`  ⚠️  Missing team FK for advanced team season average team_id ${teamApiId}, skipping`);
+        continue;
+      }
+      
+      try {
+        // Map advanced stats and upsert (will merge with existing base stats)
+        const teamAverageRow = mapTeamSeasonAverageToDb(apiAdvancedTeamAverage, teamId);
+        await upsertTeamSeasonAverage(teamAverageRow);
+        advancedTeamSeasonAveragesCount++;
+      } catch (error) {
+        console.warn(`  ⚠️  Error mapping advanced team season average for team_id ${teamApiId}:`, error);
+        continue;
+      }
+    }
+    console.log(`  ✅ Upserted ${advancedTeamSeasonAveragesCount} advanced team season averages\n`);
+
+    // ========================================================================
     // Summary
     // ========================================================================
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -553,6 +643,7 @@ export async function runNightlyJob(options: { season?: number } = {}) {
     console.log(`   • Standings: ${standingsCount}`);
     console.log(`   • Season Averages: ${seasonAveragesCount}`);
     console.log(`   • Contracts: ${contractsCount}`);
+    console.log(`   • Team Season Averages: ${teamSeasonAveragesCount}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   } catch (error) {

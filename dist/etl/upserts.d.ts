@@ -1,4 +1,4 @@
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage, NewClutchSeasonAverage, NewHistoricalSeasonAverage } from '../db/schema.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage, NewClutchSeasonAverage, NewHistoricalSeasonAverage, NewTeamSeasonAverage } from '../db/schema.js';
 /**
  * Upsert a team by api_id
  * ON CONFLICT (api_id) DO UPDATE
@@ -80,4 +80,11 @@ export declare function buildGameIdMap(apiIds: number[]): Promise<Map<number, nu
  * Returns the local database id
  */
 export declare function upsertHistoricalSeasonAverage(row: NewHistoricalSeasonAverage): Promise<number>;
+/**
+ * Upsert a team season average by teamId, season, and seasonType
+ * ON CONFLICT (teamId, season, seasonType) DO UPDATE
+ * Uses COALESCE to preserve existing values if new value is null
+ * Returns the local database id
+ */
+export declare function upsertTeamSeasonAverage(row: NewTeamSeasonAverage): Promise<number>;
 //# sourceMappingURL=upserts.d.ts.map

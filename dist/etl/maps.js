@@ -225,4 +225,36 @@ export function mapHistoricalSeasonAverageToDb(apiSeasonAverage, playerId) {
         age: stats.age ?? null, // Age from stats (now explicitly in schema)
     };
 }
+/**
+ * Map API team season average to DB team season average shape
+ * Handles both base and advanced stats
+ */
+export function mapTeamSeasonAverageToDb(apiTeamAverage, teamId) {
+    const stats = apiTeamAverage.stats || {};
+    return {
+        teamId,
+        season: apiTeamAverage.season,
+        seasonType: apiTeamAverage.season_type,
+        // Base stats
+        wins: stats.w ?? null,
+        losses: stats.l ?? null,
+        points: stats.pts ?? null,
+        fgm: stats.fgm ?? null,
+        fga: stats.fga ?? null,
+        fgPct: stats.fg_pct ?? null,
+        fta: stats.fta ?? null,
+        ftm: stats.ftm ?? null,
+        ftPct: stats.ft_pct ?? null,
+        fg3a: stats.fg3a ?? null,
+        fg3m: stats.fg3m ?? null,
+        fg3Pct: stats.fg3_pct ?? null,
+        // Advanced stats
+        pace: stats.pace ?? null,
+        efgPct: stats.efg_pct ?? null,
+        tsPct: stats.ts_pct ?? null,
+        defensiveRating: stats.def_rating ?? null,
+        offensiveRating: stats.off_rating ?? null,
+        netRating: stats.net_rating ?? null,
+    };
+}
 //# sourceMappingURL=maps.js.map

@@ -1,5 +1,5 @@
-import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding, ApiSeasonAverage, ApiAdvancedSeasonAverage } from './providers/balldontlie.js';
-import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage, NewHistoricalSeasonAverage } from '../db/schema.js';
+import type { ApiTeam, ApiPlayer, ApiGame, ApiBoxScore, ApiLeader, ApiStanding, ApiSeasonAverage, ApiAdvancedSeasonAverage, ApiTeamSeasonAverage } from './providers/balldontlie.js';
+import type { NewTeam, NewPlayer, NewGame, NewBoxScore, NewLeader, NewStanding, NewSeasonAverage, NewHistoricalSeasonAverage, NewTeamSeasonAverage } from '../db/schema.js';
 /**
  * Map API team to DB team shape
  */
@@ -44,4 +44,9 @@ export declare function mapSeasonAverageToDb(apiSeasonAverage: ApiSeasonAverage 
  * Only includes base stats, no advanced stats or rankings
  */
 export declare function mapHistoricalSeasonAverageToDb(apiSeasonAverage: ApiSeasonAverage, playerId: number): NewHistoricalSeasonAverage;
+/**
+ * Map API team season average to DB team season average shape
+ * Handles both base and advanced stats
+ */
+export declare function mapTeamSeasonAverageToDb(apiTeamAverage: ApiTeamSeasonAverage, teamId: number): NewTeamSeasonAverage;
 //# sourceMappingURL=maps.d.ts.map

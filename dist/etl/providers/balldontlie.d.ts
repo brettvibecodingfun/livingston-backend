@@ -400,5 +400,51 @@ export declare function normalizeBoxScore(boxScore: ApiBoxScore): {
  * Handles cursor-based pagination automatically
  */
 export declare function fetchHistoricalSeasonAverages(season: number, seasonType?: string, perPage?: number): Promise<ApiSeasonAverage[]>;
+declare const TeamSeasonAverageSchema: z.ZodObject<{
+    team: z.ZodObject<{
+        id: z.ZodNumber;
+        conference: z.ZodString;
+        division: z.ZodString;
+        city: z.ZodString;
+        name: z.ZodString;
+        full_name: z.ZodString;
+        abbreviation: z.ZodString;
+    }, z.core.$strip>;
+    season: z.ZodNumber;
+    season_type: z.ZodString;
+    stats: z.ZodObject<{
+        w: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        l: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        pts: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fgm: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fga: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fta: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ftm: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ft_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3a: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3m: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        fg3_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        pace: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        efg_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        ts_pct: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        def_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        off_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        net_rating: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    }, z.core.$loose>;
+}, z.core.$strip>;
+export type ApiTeamSeasonAverage = z.infer<typeof TeamSeasonAverageSchema>;
+/**
+ * Fetch team season averages (base stats)
+ * Category: general, Type: base
+ * Filters by team_ids array (only current NBA teams: IDs 1-30)
+ */
+export declare function fetchTeamSeasonAverages(season: number, seasonType?: string, teamIds?: number[]): Promise<ApiTeamSeasonAverage[]>;
+/**
+ * Fetch advanced team season averages (advanced stats)
+ * Category: general, Type: advanced
+ * Filters by team_ids array (only current NBA teams: IDs 1-30)
+ */
+export declare function fetchAdvancedTeamSeasonAverages(season: number, seasonType?: string, teamIds?: number[]): Promise<ApiTeamSeasonAverage[]>;
 export {};
 //# sourceMappingURL=balldontlie.d.ts.map

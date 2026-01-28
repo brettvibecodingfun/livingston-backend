@@ -793,4 +793,146 @@ export async function fetchHistoricalSeasonAverages(season, seasonType = 'regula
     console.log(`  ✅ Fetched ${results.length} total historical season averages`);
     return results;
 }
+// ============================================================================
+// Team Season Averages Schemas
+// ============================================================================
+const TeamSeasonAverageSchema = z.object({
+    team: z.object({
+        id: z.number(),
+        conference: z.string(),
+        division: z.string(),
+        city: z.string(),
+        name: z.string(),
+        full_name: z.string(),
+        abbreviation: z.string(),
+    }),
+    season: z.number(),
+    season_type: z.string(),
+    stats: z.object({
+        // Base stats
+        w: z.number().nullable().optional(), // wins
+        l: z.number().nullable().optional(), // losses
+        pts: z.number().nullable().optional(), // points
+        fgm: z.number().nullable().optional(), // field goals made
+        fga: z.number().nullable().optional(), // field goals attempted
+        fg_pct: z.number().nullable().optional(), // field goal percentage
+        fta: z.number().nullable().optional(), // free throws attempted
+        ftm: z.number().nullable().optional(), // free throws made
+        ft_pct: z.number().nullable().optional(), // free throw percentage
+        fg3a: z.number().nullable().optional(), // three pointers attempted
+        fg3m: z.number().nullable().optional(), // three pointers made
+        fg3_pct: z.number().nullable().optional(), // three point percentage
+        // Advanced stats (may not be present in base response)
+        pace: z.number().nullable().optional(),
+        efg_pct: z.number().nullable().optional(), // effective field goal percentage
+        ts_pct: z.number().nullable().optional(), // true shooting percentage
+        def_rating: z.number().nullable().optional(), // defensive rating
+        off_rating: z.number().nullable().optional(), // offensive rating
+        net_rating: z.number().nullable().optional(), // net rating
+    }).passthrough(), // Allow other fields we don't need
+});
+/**
+ * Fetch team season averages (base stats)
+ * Category: general, Type: base
+ * Filters by team_ids array (only current NBA teams: IDs 1-30)
+ */
+export async function fetchTeamSeasonAverages(season, seasonType = 'regular', teamIds) {
+    console.log(`📊 Fetching team season averages (general/base) for season ${season}...`);
+    const params = {
+        season,
+        season_type: seasonType,
+        type: 'base',
+    };
+    // If no team IDs provided, fetch all (not recommended)
+    if (!teamIds || teamIds.length === 0) {
+        console.log(`  ⚠️  No team IDs provided, fetching all team season averages`);
+        const response = await fetchFromAPI('/team_season_averages/general', z.object({ data: z.array(TeamSeasonAverageSchema) }), params);
+        return response.data.filter(avg => avg.team?.id !== undefined && avg.team?.id !== null);
+    }
+    // Batch team IDs into chunks of 25 to avoid URL length limits
+    const BATCH_SIZE = 25;
+    const batches = [];
+    for (let i = 0; i < teamIds.length; i += BATCH_SIZE) {
+        batches.push(teamIds.slice(i, i + BATCH_SIZE));
+    }
+    console.log(`  🏀 Filtering by ${teamIds.length} team IDs (${batches.length} batches)`);
+    const allResults = [];
+    // Fetch each batch
+    for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        console.log(`  📦 Batch ${i + 1}/${batches.length}: ${batch.length} teams`);
+        const batchParams = {
+            ...params,
+            team_ids: batch,
+        };
+        const response = await fetchFromAPI('/team_season_averages/general', z.object({ data: z.array(TeamSeasonAverageSchema) }), batchParams);
+        // Filter to only include entries with team.id and season
+        const validResults = response.data.filter(avg => avg.team?.id !== undefined &&
+            avg.team?.id !== null &&
+            avg.season !== undefined &&
+            avg.season !== null);
+        if (validResults.length < response.data.length) {
+            console.log(`    ⚠️  Filtered out ${response.data.length - validResults.length} entries missing team.id or season`);
+        }
+        allResults.push(...validResults);
+        // Throttle between batches to respect rate limits
+        if (i < batches.length - 1) {
+            await throttle();
+        }
+    }
+    console.log(`  ✅ Fetched ${allResults.length} valid team season averages from ${batches.length} batches`);
+    return allResults;
+}
+/**
+ * Fetch advanced team season averages (advanced stats)
+ * Category: general, Type: advanced
+ * Filters by team_ids array (only current NBA teams: IDs 1-30)
+ */
+export async function fetchAdvancedTeamSeasonAverages(season, seasonType = 'regular', teamIds) {
+    console.log(`📊 Fetching advanced team season averages (general/advanced) for season ${season}...`);
+    const params = {
+        season,
+        season_type: seasonType,
+        type: 'advanced',
+    };
+    // If no team IDs provided, fetch all (not recommended)
+    if (!teamIds || teamIds.length === 0) {
+        console.log(`  ⚠️  No team IDs provided, fetching all advanced team season averages`);
+        const response = await fetchFromAPI('/team_season_averages/general', z.object({ data: z.array(TeamSeasonAverageSchema) }), params);
+        return response.data.filter(avg => avg.team?.id !== undefined && avg.team?.id !== null);
+    }
+    // Batch team IDs into chunks of 25 to avoid URL length limits
+    const BATCH_SIZE = 25;
+    const batches = [];
+    for (let i = 0; i < teamIds.length; i += BATCH_SIZE) {
+        batches.push(teamIds.slice(i, i + BATCH_SIZE));
+    }
+    console.log(`  🏀 Filtering by ${teamIds.length} team IDs (${batches.length} batches)`);
+    const allResults = [];
+    // Fetch each batch
+    for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        console.log(`  📦 Batch ${i + 1}/${batches.length}: ${batch.length} teams`);
+        const batchParams = {
+            ...params,
+            team_ids: batch,
+        };
+        const response = await fetchFromAPI('/team_season_averages/general', z.object({ data: z.array(TeamSeasonAverageSchema) }), batchParams);
+        // Filter to only include entries with team.id and season
+        const validResults = response.data.filter(avg => avg.team?.id !== undefined &&
+            avg.team?.id !== null &&
+            avg.season !== undefined &&
+            avg.season !== null);
+        if (validResults.length < response.data.length) {
+            console.log(`    ⚠️  Filtered out ${response.data.length - validResults.length} entries missing team.id or season`);
+        }
+        allResults.push(...validResults);
+        // Throttle between batches to respect rate limits
+        if (i < batches.length - 1) {
+            await throttle();
+        }
+    }
+    console.log(`  ✅ Fetched ${allResults.length} valid advanced team season averages from ${batches.length} batches`);
+    return allResults;
+}
 //# sourceMappingURL=balldontlie.js.map

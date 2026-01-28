@@ -1,5 +1,5 @@
 import { db } from '../db/client.js';
-import { teams, players, games, boxScores, leaders, standings, seasonAverages, clutchSeasonAverages, historicalSeasonAverages } from '../db/schema.js';
+import { teams, players, games, boxScores, leaders, standings, seasonAverages, clutchSeasonAverages, historicalSeasonAverages, teamSeasonAverages } from '../db/schema.js';
 import { eq, sql, inArray, and } from 'drizzle-orm';
 /**
  * Upsert a team by api_id
@@ -404,6 +404,45 @@ export async function upsertHistoricalSeasonAverage(row) {
         },
     })
         .returning({ id: historicalSeasonAverages.id });
+    return result[0].id;
+}
+/**
+ * Upsert a team season average by teamId, season, and seasonType
+ * ON CONFLICT (teamId, season, seasonType) DO UPDATE
+ * Uses COALESCE to preserve existing values if new value is null
+ * Returns the local database id
+ */
+export async function upsertTeamSeasonAverage(row) {
+    const result = await db
+        .insert(teamSeasonAverages)
+        .values(row)
+        .onConflictDoUpdate({
+        target: [teamSeasonAverages.teamId, teamSeasonAverages.season, teamSeasonAverages.seasonType],
+        set: {
+            // Base stats
+            wins: sql `COALESCE(EXCLUDED.wins, team_season_averages.wins)`,
+            losses: sql `COALESCE(EXCLUDED.losses, team_season_averages.losses)`,
+            points: sql `COALESCE(EXCLUDED.points, team_season_averages.points)`,
+            fgm: sql `COALESCE(EXCLUDED.fgm, team_season_averages.fgm)`,
+            fga: sql `COALESCE(EXCLUDED.fga, team_season_averages.fga)`,
+            fgPct: sql `COALESCE(EXCLUDED.fg_pct, team_season_averages.fg_pct)`,
+            fta: sql `COALESCE(EXCLUDED.fta, team_season_averages.fta)`,
+            ftm: sql `COALESCE(EXCLUDED.ftm, team_season_averages.ftm)`,
+            ftPct: sql `COALESCE(EXCLUDED.ft_pct, team_season_averages.ft_pct)`,
+            fg3a: sql `COALESCE(EXCLUDED.fg3a, team_season_averages.fg3a)`,
+            fg3m: sql `COALESCE(EXCLUDED.fg3m, team_season_averages.fg3m)`,
+            fg3Pct: sql `COALESCE(EXCLUDED.fg3_pct, team_season_averages.fg3_pct)`,
+            // Advanced stats
+            pace: sql `COALESCE(EXCLUDED.pace, team_season_averages.pace)`,
+            efgPct: sql `COALESCE(EXCLUDED.efg_pct, team_season_averages.efg_pct)`,
+            tsPct: sql `COALESCE(EXCLUDED.ts_pct, team_season_averages.ts_pct)`,
+            defensiveRating: sql `COALESCE(EXCLUDED.defensive_rating, team_season_averages.defensive_rating)`,
+            offensiveRating: sql `COALESCE(EXCLUDED.offensive_rating, team_season_averages.offensive_rating)`,
+            netRating: sql `COALESCE(EXCLUDED.net_rating, team_season_averages.net_rating)`,
+            updatedAt: sql `NOW()`,
+        },
+    })
+        .returning({ id: teamSeasonAverages.id });
     return result[0].id;
 }
 //# sourceMappingURL=upserts.js.map

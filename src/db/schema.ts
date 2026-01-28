@@ -372,6 +372,7 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   awayGames: many(games, { relationName: 'awayTeam' }),
   boxScores: many(boxScores),
   standings: many(standings),
+  teamSeasonAverages: many(teamSeasonAverages),
 }));
 
 export const playersRelations = relations(players, ({ one, many }) => ({
@@ -446,6 +447,43 @@ export const clutchSeasonAveragesRelations = relations(clutchSeasonAverages, ({ 
     fields: [clutchSeasonAverages.playerId],
     references: [players.id],
   }),
+}));
+
+/**
+ * Team Season Averages table
+ * Stores team season averages (base and advanced stats)
+ */
+export const teamSeasonAverages = pgTable('team_season_averages', {
+  id: serial('id').primaryKey(),
+  teamId: integer('team_id').references(() => teams.id).notNull(),
+  season: integer('season').notNull(),
+  seasonType: text('season_type').notNull(), // 'regular' or 'playoffs'
+  // Base stats
+  wins: integer('wins'),
+  losses: integer('losses'),
+  points: real('points'), // pts
+  fgm: real('fgm'), // Field goals made
+  fga: real('fga'), // Field goals attempted
+  fgPct: real('fg_pct'), // Field goal percentage
+  fta: real('fta'), // Free throws attempted
+  ftm: real('ftm'), // Free throws made
+  ftPct: real('ft_pct'), // Free throw percentage
+  fg3a: real('fg3a'), // Three pointers attempted
+  fg3m: real('fg3m'), // Three pointers made
+  fg3Pct: real('fg3_pct'), // Three point percentage
+  // Advanced stats
+  pace: real('pace'),
+  efgPct: real('efg_pct'), // Effective field goal percentage
+  tsPct: real('ts_pct'), // True shooting percentage
+  defensiveRating: real('defensive_rating'), // def_rating
+  offensiveRating: real('offensive_rating'), // off_rating
+  netRating: real('net_rating'), // net_rating
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  teamSeasonUnique: unique('team_season_averages_team_season_unique').on(table.teamId, table.season, table.seasonType),
+  teamIdIdx: index('team_season_averages_team_id_idx').on(table.teamId),
+  seasonIdx: index('team_season_averages_season_idx').on(table.season),
 }));
 
 /**
@@ -525,3 +563,6 @@ export type NewGuessPlayerLeaderboard = typeof guessPlayerLeaderboard.$inferInse
 
 export type PlayerCluster = typeof playerClusters.$inferSelect;
 export type NewPlayerCluster = typeof playerClusters.$inferInsert;
+
+export type TeamSeasonAverage = typeof teamSeasonAverages.$inferSelect;
+export type NewTeamSeasonAverage = typeof teamSeasonAverages.$inferInsert;
